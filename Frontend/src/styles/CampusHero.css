@@ -1,0 +1,376 @@
+/* ==========================================================================
+   CAMPUS HERO SECTION & LIVE PREVIEW CARD - DBU THEME
+   ========================================================================== */
+
+.ExecutiveHero {
+    width: 100%;
+    padding: 48px 0 64px 0;
+    background: linear-gradient(180deg, #ffffff 0%, var(--surface-canvas, #f8fafc) 100%);
+    border-bottom: 1px solid var(--border-subtle, #e2e8f0);
+}
+
+.HeroBoundary {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 48px;
+    align-items: center;
+}
+
+/* Left Pitch */
+.HeroContentLeft {
+    display: flex;
+    flex-direction: column;
+}
+
+.MicroPillNotification {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #ffffff;
+    border: 1px solid var(--border-subtle, #e2e8f0);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-body, #334155);
+    width: fit-content;
+    margin-bottom: 18px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.PillAccentTag {
+    background: var(--dbu-navy, #002b54);
+    color: var(--dbu-gold, #f5a800);
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+}
+
+.DisplayHeading {
+    font-size: 38px;
+    font-weight: 900;
+    line-height: 1.2;
+    letter-spacing: -0.03em;
+    color: var(--dbu-navy, #002b54);
+    margin-bottom: 16px;
+}
+
+.DisplayHeading span {
+    color: var(--dbu-gold, #f5a800);
+}
+
+.DisplaySubtext {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--text-muted, #64748b);
+    max-width: 580px;
+    margin-bottom: 26px;
+}
+
+.HeroActionsCluster {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 26px;
+    flex-wrap: wrap;
+}
+
+.HeroPrimaryBtn {
+    background: var(--dbu-navy, #002b54);
+    color: #ffffff;
+    border: none;
+    padding: 12px 22px;
+    border-radius: 9px;
+    font-size: 13.5px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0, 43, 84, 0.18);
+    transition: all 0.2s ease;
+}
+
+.HeroPrimaryBtn i {
+    color: var(--dbu-gold, #f5a800);
+    font-size: 16px;
+}
+
+.HeroPrimaryBtn:hover {
+    background: var(--dbu-navy-hover, #001f3f);
+    transform: translateY(-1px);
+}
+
+.HeroSecondaryBtn {
+    background: #ffffff;
+    color: var(--dbu-navy, #002b54);
+    border: 1.5px solid var(--border-strong, #cbd5e1);
+    padding: 12px 20px;
+    border-radius: 9px;
+    font-size: 13.5px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.HeroSecondaryBtn:hover {
+    background: var(--surface-subtle, #f1f5f9);
+    border-color: var(--dbu-navy, #002b54);
+}
+
+/* Trust Indicators */
+.CampusTrustIndicators {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+}
+
+.TrustPoint {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted, #64748b);
+}
+
+.TrustPoint i {
+    color: #059669;
+    font-size: 16px;
+}
+
+/* Right Column Live Preview Card */
+.HeroContentRight {
+    width: 100%;
+}
+
+.LiveBoardCard {
+    background: var(--surface-card, #ffffff);
+    border: 1.5px solid var(--border-subtle, #e2e8f0);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 14px 34px -4px rgba(0, 43, 84, 0.08);
+}
+
+.LiveBoardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-subtle, #e2e8f0);
+}
+
+.LiveBoardHeader h3 {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--dbu-navy, #002b54);
+    margin-bottom: 2px;
+}
+
+.LiveBoardHeader p {
+    font-size: 11.5px;
+    color: var(--text-muted, #64748b);
+}
+
+.LivePulseTag {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: #ecfdf5;
+    color: #059669;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 20px;
+}
+
+.GreenBlinker {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10b981;
+}
+
+/* Empty State */
+.EmptyHeroPreview {
+    text-align: center;
+    padding: 36px 16px;
+    border: 1.5px dashed var(--border-strong, #cbd5e1);
+    border-radius: 12px;
+    margin-bottom: 16px;
+}
+
+.EmptyHeroPreview i {
+    font-size: 36px;
+    color: var(--text-muted, #64748b);
+    margin-bottom: 8px;
+}
+
+.EmptyHeroPreview h4 {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--dbu-navy, #002b54);
+    margin-bottom: 4px;
+}
+
+.EmptyHeroPreview p {
+    font-size: 12px;
+    color: var(--text-muted, #64748b);
+    margin-bottom: 14px;
+}
+
+.FirstAddBtn {
+    background: var(--dbu-gold, #f5a800);
+    color: var(--dbu-navy, #002b54);
+    border: none;
+    font-size: 12px;
+    font-weight: 800;
+    padding: 7px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+}
+
+.FirstAddBtn:hover {
+    opacity: 0.9;
+}
+
+/* Populated List */
+.EquipmentList {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.EquipmentItemRow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    border-radius: 10px;
+    background: var(--surface-subtle, #f1f5f9);
+    border: 1px solid transparent;
+    transition: all 0.15s ease;
+}
+
+.EquipmentItemRow:hover {
+    background: #ffffff;
+    border-color: var(--border-strong, #cbd5e1);
+    box-shadow: 0 4px 10px rgba(0, 43, 84, 0.05);
+}
+
+.ListingThumb {
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 1px solid var(--border-subtle, #e2e8f0);
+    flex-shrink: 0;
+}
+
+.EquipmentDetails {
+    flex: 1;
+    min-width: 0;
+}
+
+.ListingBadge {
+    display: inline-block;
+    font-size: 9px;
+    font-weight: 800;
+    color: var(--dbu-navy, #002b54);
+    background: var(--dbu-gold-muted, #fff7e6);
+    border: 1px solid rgba(245, 168, 0, 0.35);
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-bottom: 2px;
+}
+
+.EquipmentDetails h4 {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-headline, #0a192f);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.DeptTag {
+    font-size: 11px;
+    color: var(--text-muted, #64748b);
+    display: block;
+}
+
+.EquipmentPricing {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.MicroRate {
+    font-size: 13px;
+    font-weight: 900;
+    color: var(--dbu-navy, #002b54);
+}
+
+.QuickRentMiniBtn {
+    background: var(--dbu-navy, #002b54);
+    color: #ffffff;
+    border: none;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.QuickRentMiniBtn:hover {
+    background: var(--dbu-navy-hover, #001f3f);
+}
+
+.ListingCardFooter {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-subtle, #e2e8f0);
+    font-size: 11.5px;
+    color: var(--text-muted, #64748b);
+}
+
+.ViewModeFeedBtn {
+    background: none;
+    border: none;
+    color: var(--dbu-navy, #002b54);
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    padding: 0;
+}
+
+.ViewModeFeedBtn:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 990px) {
+    .HeroBoundary {
+        grid-template-columns: 1fr;
+        gap: 36px;
+    }
+
+    .DisplayHeading {
+        font-size: 32px;
+    }
+}

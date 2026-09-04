@@ -1,0 +1,302 @@
+/* ==========================================================================
+   FRESHER CATALOG & CLEARANCE STORE - DBU THEME
+   ========================================================================== */
+
+.FresherStoreSection {
+    padding: 64px 24px;
+    background: var(--surface-canvas, #f8fafc);
+    border-bottom: 1px solid var(--border-subtle, #e2e8f0);
+}
+
+.StoreContainer {
+    max-width: 1280px;
+    margin: 0 auto;
+}
+
+.StoreHeaderDeck {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 28px;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.StoreModeFilterPills {
+    display: flex;
+    background: #ffffff;
+    border: 1.5px solid var(--border-subtle, #e2e8f0);
+    border-radius: 10px;
+    padding: 4px;
+    gap: 4px;
+}
+
+.ModePill {
+    border: none;
+    background: transparent;
+    padding: 8px 16px;
+    border-radius: 7px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--text-body, #334155);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.ModePill.active {
+    background: var(--dbu-navy, #002b54);
+    color: #ffffff;
+}
+
+/* Filter Controls */
+.StoreControlsBar {
+    margin-bottom: 30px;
+}
+
+.StoreSearchBar {
+    max-width: 480px;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.StoreSearchBar i {
+    position: absolute;
+    left: 14px;
+    color: var(--text-muted, #64748b);
+    font-size: 18px;
+}
+
+.StoreSearchBar input {
+    width: 100%;
+    padding: 10px 14px 10px 42px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border-strong, #cbd5e1);
+    font-size: 13.5px;
+    outline: none;
+    background: #ffffff;
+    color: var(--text-headline, #0a192f);
+}
+
+.StoreSearchBar input:focus {
+    border-color: var(--dbu-navy, #002b54);
+}
+
+/* Empty Catalog State */
+.EmptyCatalogState {
+    text-align: center;
+    padding: 56px 20px;
+    background: #ffffff;
+    border-radius: 14px;
+    border: 1.5px dashed var(--border-strong, #cbd5e1);
+}
+
+.EmptyCatalogState i {
+    font-size: 40px;
+    color: var(--text-muted, #64748b);
+    margin-bottom: 8px;
+}
+
+.EmptyCatalogState h3 {
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--dbu-navy, #002b54);
+    margin-bottom: 4px;
+}
+
+.EmptyCatalogState p {
+    font-size: 13px;
+    color: var(--text-muted, #64748b);
+}
+
+/* Catalog Grid */
+.CatalogGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+}
+
+.ProductCard {
+    background: #ffffff;
+    border: 1.5px solid var(--border-subtle, #e2e8f0);
+    border-radius: 14px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.2s ease;
+}
+
+.ProductCard:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 28px rgba(0, 43, 84, 0.08);
+    border-color: var(--border-strong, #cbd5e1);
+}
+
+.CardImageHolder {
+    position: relative;
+    width: 100%;
+    height: 180px;
+    background: #f1f5f9;
+}
+
+.CardImageHolder img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.TypeFlag {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.TypeFlag.rent {
+    background: var(--dbu-navy, #002b54);
+    color: #ffffff;
+}
+
+.TypeFlag.buy {
+    background: var(--dbu-gold, #f5a800);
+    color: var(--dbu-navy, #002b54);
+}
+
+.DeleteListingBtn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    color: #ef4444;
+    border: 1px solid var(--border-subtle, #e2e8f0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.DeleteListingBtn:hover {
+    background: #ef4444;
+    color: #ffffff;
+}
+
+.CardBody {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.CardCategoryTag {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--dbu-blue-accent, #00569e);
+    margin-bottom: 4px;
+}
+
+.CardTitle {
+    font-size: 14.5px;
+    font-weight: 800;
+    color: var(--text-headline, #0a192f);
+    line-height: 1.3;
+    margin-bottom: 8px;
+}
+
+.OwnerMetaRow,
+.HostelMetaRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11.5px;
+    color: var(--text-muted, #64748b);
+    margin-bottom: 4px;
+}
+
+/* Pricing Row */
+.CardPricingStrip {
+    background: var(--surface-subtle, #f1f5f9);
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin: 10px 0 14px 0;
+}
+
+.PrimaryPrice {
+    font-size: 18px;
+    font-weight: 900;
+    color: var(--dbu-navy, #002b54);
+}
+
+.PerUnitText {
+    font-size: 12px;
+    color: var(--text-body, #334155);
+    font-weight: 600;
+    margin-left: 4px;
+}
+
+.DepositHint {
+    display: block;
+    font-size: 10.5px;
+    color: #059669;
+    font-weight: 700;
+    margin-top: 2px;
+}
+
+.MrpCut {
+    display: block;
+    font-size: 11px;
+    color: var(--text-muted, #64748b);
+    text-decoration: line-through;
+}
+
+/* Action Buttons */
+.CardActionsRow {
+    display: flex;
+    gap: 8px;
+    margin-top: auto;
+}
+
+.WhatsAppActionBtn {
+    flex: 1;
+    background: #25d366;
+    color: #ffffff;
+    border: none;
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    text-decoration: none;
+    transition: opacity 0.15s ease;
+}
+
+.WhatsAppActionBtn:hover {
+    opacity: 0.9;
+}
+
+.BorrowDetailBtn {
+    flex: 1;
+    background: var(--dbu-navy, #002b54);
+    color: #ffffff;
+    border: none;
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.BorrowDetailBtn:hover {
+    background: var(--dbu-navy-hover, #001f3f);
+}

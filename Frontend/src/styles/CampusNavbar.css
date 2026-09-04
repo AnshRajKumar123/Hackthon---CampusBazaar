@@ -1,0 +1,312 @@
+/* ==========================================================================
+   MODERN CAMPUSBAZAAR NAVBAR - DBU THEME
+   ========================================================================== */
+
+.NavModernRoot {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+    transition: all 0.2s ease;
+}
+
+.NavModernContainer {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 10px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+/* --- Brand Identity --- */
+.NavBrandBlock {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    user-select: none;
+    text-decoration: none;
+}
+
+.BrandLogoWrapper {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+}
+
+.BrandLogoImg {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 12px;
+    background: #ffffff;
+    padding: 2px;
+    border: 1.5px solid #f5a800;
+    box-shadow: 0 4px 12px rgba(0, 43, 84, 0.08);
+    transition: transform 0.2s ease;
+}
+
+.NavBrandBlock:hover .BrandLogoImg {
+    transform: scale(1.04);
+}
+
+.LiveStatusBeacon {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    width: 11px;
+    height: 11px;
+    background: #10b981;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+}
+
+.BrandTextMeta {
+    display: flex;
+    flex-direction: column;
+}
+
+.BrandNameRow {
+    display: flex;
+    align-items: baseline;
+    line-height: 1.1;
+}
+
+.BrandPrimaryWord {
+    font-size: 19px;
+    font-weight: 900;
+    color: #002b54;
+    letter-spacing: -0.02em;
+}
+
+.BrandSecondaryWord {
+    font-size: 19px;
+    font-weight: 900;
+    color: #f5a800;
+    letter-spacing: -0.02em;
+}
+
+.BrandCampusTag {
+    font-size: 10px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 1px;
+}
+
+/* --- Center Navigation Dock --- */
+.NavCenterPillDock {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: #f1f5f9;
+    padding: 4px;
+    border-radius: 30px;
+    border: 1px solid #e2e8f0;
+}
+
+.DockLink {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 24px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    white-space: nowrap;
+}
+
+.DockLink i {
+    font-size: 16px;
+    color: #64748b;
+    transition: color 0.15s ease;
+}
+
+.DockLink:hover {
+    color: #002b54;
+    background: rgba(255, 255, 255, 0.6);
+}
+
+.DockLink:hover i {
+    color: #002b54;
+}
+
+.DockLink.active {
+    background: #ffffff;
+    color: #002b54;
+    box-shadow: 0 2px 8px rgba(0, 43, 84, 0.08);
+}
+
+.DockLink.active i {
+    color: #f5a800;
+}
+
+/* --- Right Controls --- */
+.NavControlsCluster {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.InstallPillBtn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1d4ed8;
+    padding: 7px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.InstallPillBtn:hover {
+    background: #dbeafe;
+}
+
+.SignInActionBtn {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: #002b54;
+    color: #ffffff;
+    border: none;
+    padding: 9px 18px;
+    border-radius: 22px;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 43, 84, 0.18);
+    transition: all 0.18s ease;
+}
+
+.SignInActionBtn i {
+    font-size: 17px;
+    color: #f5a800;
+}
+
+.SignInActionBtn:hover {
+    background: #001f3f;
+    transform: translateY(-1px);
+}
+
+/* Modern Member Badge */
+.ModernMemberBadge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #ffffff;
+    border: 1.5px solid #cbd5e1;
+    padding: 4px 12px 4px 5px;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ModernMemberBadge:hover {
+    border-color: #002b54;
+    box-shadow: 0 4px 12px rgba(0, 43, 84, 0.08);
+    transform: translateY(-1px);
+}
+
+.MemberAvatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #002b54 0%, #004280 100%);
+    color: #f5a800;
+    font-size: 13.5px;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0, 43, 84, 0.15);
+    flex-shrink: 0;
+}
+
+.MemberMeta {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+}
+
+.MemberName {
+    font-size: 12.5px;
+    font-weight: 800;
+    color: #002b54;
+    line-height: 1.15;
+}
+
+.MemberRoll {
+    font-size: 10px;
+    font-weight: 600;
+    color: #64748b;
+    letter-spacing: 0.02em;
+}
+
+.NavMemberArrow {
+    font-size: 16px;
+    color: #94a3b8;
+    margin-left: 2px;
+    transition: transform 0.15s ease;
+}
+
+.ModernMemberBadge:hover .NavMemberArrow {
+    color: #002b54;
+    transform: translateX(2px);
+}
+
+/* --- Responsive Adjustments --- */
+@media (max-width: 960px) {
+    .NavCenterPillDock {
+        display: none;
+    }
+}
+
+@media (max-width: 580px) {
+    .NavModernContainer {
+        padding: 8px 16px;
+    }
+
+    .BrandCampusTag {
+        display: none;
+    }
+
+    .MemberMeta {
+        display: none;
+    }
+
+    .NavMemberArrow {
+        display: none;
+    }
+
+    .ModernMemberBadge {
+        padding: 3px;
+        border-radius: 50%;
+    }
+
+    .SignInActionBtn span {
+        display: none;
+    }
+
+    .SignInActionBtn {
+        padding: 8px 12px;
+        border-radius: 50%;
+    }
+}

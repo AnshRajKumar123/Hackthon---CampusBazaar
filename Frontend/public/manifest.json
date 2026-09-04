@@ -1,0 +1,21 @@
+{
+  "short_name": "CampusBazaar",
+  "name": "DBU CampusBazaar - Peer Resource & Micro-Rental Hub",
+  "icons": [
+    {
+      "src": "/pwa-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/pwa-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#002b54",
+  "theme_color": "#002b54",
+  "display": "standalone",
+  "orientation": "portrait"
+}

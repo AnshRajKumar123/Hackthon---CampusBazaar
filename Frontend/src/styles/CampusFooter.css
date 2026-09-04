@@ -1,0 +1,375 @@
+/* ==========================================================================
+   REFINED MODERN FOOTER - CAMPUSBAZAAR DBU THEME
+   ========================================================================== */
+
+.FooterModernRoot {
+    width: 100%;
+    background: linear-gradient(180deg, #001f3f 0%, #001226 100%);
+    color: #cbd5e1;
+    position: relative;
+    border-top: 3px solid #f5a800;
+}
+
+/* --- Top Assurance Band --- */
+.FooterAssuranceBand {
+    background: rgba(0, 43, 84, 0.45);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 22px 24px;
+}
+
+.AssuranceContainer {
+    max-width: 1280px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.AssuranceItem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.AssuranceItem i {
+    font-size: 26px;
+    color: #f5a800;
+    background: rgba(245, 168, 0, 0.12);
+    padding: 8px;
+    border-radius: 10px;
+    border: 1px solid rgba(245, 168, 0, 0.25);
+}
+
+.AssuranceItem div {
+    display: flex;
+    flex-direction: column;
+}
+
+.AssuranceItem strong {
+    font-size: 13.5px;
+    color: #ffffff;
+    font-weight: 800;
+}
+
+.AssuranceItem span {
+    font-size: 11.5px;
+    color: #94a3b8;
+}
+
+.AssuranceDivider {
+    width: 1px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* --- Main Columns Deck --- */
+.FooterMainDeck {
+    padding: 56px 24px 44px 24px;
+}
+
+.FooterGridContainer {
+    max-width: 1280px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1.4fr 0.9fr 1.1fr 1fr;
+    gap: 40px;
+}
+
+/* Brand Panel */
+.BrandPanel {
+    display: flex;
+    flex-direction: column;
+}
+
+.FooterBrandGroup {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    width: fit-content;
+    margin-bottom: 16px;
+}
+
+.FooterLogoWrapper {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: #ffffff;
+    padding: 2px;
+    border: 1.5px solid #f5a800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.FooterLogoImg {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.BrandTitle {
+    font-size: 20px;
+    font-weight: 900;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+}
+
+.NavyWord {
+    color: #ffffff;
+}
+
+.GoldWord {
+    color: #f5a800;
+}
+
+.BrandSubTag {
+    display: block;
+    font-size: 10.5px;
+    color: #94a3b8;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-top: 2px;
+}
+
+.BrandNarrative {
+    font-size: 13px;
+    line-height: 1.65;
+    color: #94a3b8;
+    margin-bottom: 20px;
+    max-width: 340px;
+}
+
+.LocationBadgeRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.LocationChip,
+.CampusStatusChip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #e2e8f0;
+}
+
+.LocationChip i {
+    color: #f5a800;
+}
+
+.PulseDot {
+    width: 6px;
+    height: 6px;
+    background: #10b981;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #10b981;
+}
+
+/* Headings & Links */
+.FooterColHeading {
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    position: relative;
+    padding-bottom: 8px;
+}
+
+.FooterColHeading::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 24px;
+    height: 2px;
+    background: #f5a800;
+    border-radius: 2px;
+}
+
+.FooterLinkList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.FooterLinkList button {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 0;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-align: left;
+    transition: all 0.15s ease;
+}
+
+.FooterLinkList button i {
+    font-size: 14px;
+    color: #64748b;
+    transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.FooterLinkList button:hover {
+    color: #ffffff;
+    transform: translateX(3px);
+}
+
+.FooterLinkList button:hover i {
+    color: #f5a800;
+}
+
+.FooterLinkList.staticList li {
+    font-size: 12.5px;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.FooterLinkList.staticList li i {
+    color: #f5a800;
+    font-size: 15px;
+}
+
+/* Meetup Point Chips */
+.HostelChipsGrid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.HostelChip {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #cbd5e1;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 9px;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+}
+
+.HostelChip:hover {
+    background: rgba(245, 168, 0, 0.15);
+    border-color: #f5a800;
+    color: #ffffff;
+}
+
+/* --- Bottom Sub-Band --- */
+.FooterBottomSubBand {
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 20px 24px;
+    background: rgba(0, 15, 30, 0.6);
+}
+
+.BottomBandContainer {
+    max-width: 1280px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.CopyrightText {
+    font-size: 12px;
+    color: #64748b;
+    margin: 0;
+}
+
+.CopyrightText strong {
+    color: #cbd5e1;
+}
+
+.FooterBadges {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.BadgeTag {
+    font-size: 11.5px;
+    color: #94a3b8;
+    font-weight: 600;
+}
+
+.BulletDot {
+    color: #475569;
+    font-size: 12px;
+}
+
+.BackToTopBtn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 18px;
+    margin-left: 6px;
+    transition: all 0.18s ease;
+}
+
+.BackToTopBtn:hover {
+    background: #f5a800;
+    color: #002b54;
+    border-color: #f5a800;
+    transform: translateY(-2px);
+}
+
+/* --- Responsiveness --- */
+@media (max-width: 1024px) {
+    .FooterGridContainer {
+        grid-template-columns: 1fr 1fr;
+        gap: 36px;
+    }
+}
+
+@media (max-width: 768px) {
+    .AssuranceDivider {
+        display: none;
+    }
+
+    .AssuranceContainer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 14px;
+    }
+}
+
+@media (max-width: 580px) {
+    .FooterGridContainer {
+        grid-template-columns: 1fr;
+        gap: 30px;
+    }
+
+    .BottomBandContainer {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
