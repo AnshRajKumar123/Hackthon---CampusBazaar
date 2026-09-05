@@ -79,6 +79,7 @@ const AuthModal = ({ isFullScreen = false, onClose }) => {
     const { loginUser, registerUser } = useCampus();
     const [activeTab, setActiveTab] = useState("login");
     const [errorMessage, setErrorMessage] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -102,8 +103,9 @@ const AuthModal = ({ isFullScreen = false, onClose }) => {
         setErrorMessage("");
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        setErrorMessage("");
 
         if (activeTab === "register") {
             if (formData.password !== formData.confirmPassword) {
@@ -115,27 +117,41 @@ const AuthModal = ({ isFullScreen = false, onClose }) => {
                 return;
             }
 
-            const res = registerUser({
-                name: formData.name,
-                rollNo: formData.rollNo,
-                password: formData.password,
-                department: formData.department,
-                hostelBlock: formData.hostelBlock,
-                phone: formData.phone,
-            });
+            setIsSubmitting(true);
+            try {
+                const res = await registerUser({
+                    name: formData.name,
+                    rollNo: formData.rollNo,
+                    password: formData.password,
+                    department: formData.department,
+                    hostelBlock: formData.hostelBlock,
+                    phone: formData.phone,
+                });
 
-            if (!res.success) {
-                setErrorMessage(res.message);
-                return;
+                if (!res.success) {
+                    setErrorMessage(res.message || "Failed to register student.");
+                    return;
+                }
+                if (onClose) onClose();
+            } catch (err) {
+                setErrorMessage("Server error during registration. Check server status.");
+            } finally {
+                setIsSubmitting(false);
             }
-            if (onClose) onClose();
         } else {
-            const res = loginUser(formData.rollNo, formData.password);
-            if (!res.success) {
-                setErrorMessage(res.message);
-                return;
+            setIsSubmitting(true);
+            try {
+                const res = await loginUser(formData.rollNo, formData.password);
+                if (!res.success) {
+                    setErrorMessage(res.message || "Invalid roll number or password.");
+                    return;
+                }
+                if (onClose) onClose();
+            } catch (err) {
+                setErrorMessage("Server error during login. Check server status.");
+            } finally {
+                setIsSubmitting(false);
             }
-            if (onClose) onClose();
         }
     };
 
@@ -280,7 +296,6 @@ const AuthModal = ({ isFullScreen = false, onClose }) => {
                                     </div>
                                 </div>
 
-                                {/* Custom Styled Dropdowns */}
                                 <div className="AuthDualFields">
                                     <CustomSelect
                                         label="Department"
@@ -301,7 +316,6 @@ const AuthModal = ({ isFullScreen = false, onClose }) => {
                             </>
                         )}
 
-                        {/* Password input with functional toggle */}
                         <div className="AuthInputGroup">
                             <label>Password *</label>
                             <div className="InputWithIcon">
@@ -356,9 +370,15 @@ const AuthModal = ({ isFullScreen = false, onClose }) => {
                             </div>
                         )}
 
-                        <button type="submit" className="AuthActionPrimary">
-                            <span>{activeTab === "login" ? "Enter CampusBazaar" : "Create My Student Account"}</span>
-                            <i className="bx bx-right-arrow-alt"></i>
+                        <button type="submit" className="AuthActionPrimary" disabled={isSubmitting}>
+                            <span>
+                                {isSubmitting
+                                    ? "Connecting to Database..."
+                                    : activeTab === "login"
+                                        ? "Enter CampusBazaar"
+                                        : "Create My Student Account"}
+                            </span>
+                            <i className={`bx ${isSubmitting ? "bx-loader-alt bx-spin" : "bx-right-arrow-alt"}`}></i>
                         </button>
                     </form>
                 </main>
