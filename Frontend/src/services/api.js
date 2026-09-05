@@ -1,17 +1,4 @@
-// Automatically handles switching between localhost and your local IP on mobile
-const PRODUCTION_API = "https://campusbazaar-backend-ajve.onrender.com/api";
-
-const isLocal =
-    window.location.hostname === "localhost" ||
-    window.location.hostname.startsWith("10.") ||
-    window.location.hostname.startsWith("192.") ||
-    window.location.hostname === "127.0.0.1";
-
-const API_BASE = import.meta.env.VITE_API_URL
-    ? `${import.meta.env.VITE_API_URL}/api`
-    : isLocal
-        ? `http://${window.location.hostname}:5001/api`
-        : PRODUCTION_API;
+const API_BASE = `http://${window.location.hostname}:5001/api`;
 
 export const api = {
     // Auth

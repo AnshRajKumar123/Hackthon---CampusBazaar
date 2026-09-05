@@ -2,26 +2,14 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 
 const CampusContext = createContext();
 
-// Production Render backend fallback
-const PRODUCTION_API = "https://campusbazaar-backend-ajve.onrender.com";
-
-const isLocal =
-    window.location.hostname === "localhost" ||
-    window.location.hostname.startsWith("10.") ||
-    window.location.hostname.startsWith("192.") ||
-    window.location.hostname === "127.0.0.1";
-
-const API_BASE = import.meta.env.VITE_API_URL
-    ? `${import.meta.env.VITE_API_URL}/api`
-    : isLocal
-        ? `http://${window.location.hostname}:5001/api`
-        : `${PRODUCTION_API}/api`;
+// Localhost / Local Area Network targeting on port 5001
+const API_BASE = `http://${window.location.hostname}:5001/api`;
 
 export const CampusProvider = ({ children }) => {
     const [listings, setListings] = useState([]);
     const [isLoadingListings, setIsLoadingListings] = useState(true);
 
-    // Pure React session state (no localStorage)
+    // Auth session states in React memory
     const [currentUser, setCurrentUser] = useState(null);
     const [authToken, setAuthToken] = useState(null);
 
@@ -45,7 +33,7 @@ export const CampusProvider = ({ children }) => {
         fetchListings();
     }, []);
 
-    // Auth: Register User in MongoDB
+    // Auth: Register User
     const registerUser = async ({ name, rollNo, password, department, hostelBlock, phone }) => {
         try {
             const res = await fetch(`${API_BASE}/auth/register`, {
@@ -70,11 +58,11 @@ export const CampusProvider = ({ children }) => {
             return { success: false, message: data.message || "Registration failed" };
         } catch (err) {
             console.error("Registration error:", err);
-            return { success: false, message: "Server connection failed." };
+            return { success: false, message: "Server connection failed. Is backend running on port 5001?" };
         }
     };
 
-    // Auth: Login User against MongoDB Atlas
+    // Auth: Login User
     const loginUser = async (rollNo, password) => {
         try {
             const res = await fetch(`${API_BASE}/auth/login`, {
@@ -95,7 +83,7 @@ export const CampusProvider = ({ children }) => {
             return { success: false, message: data.message || "Invalid credentials" };
         } catch (err) {
             console.error("Login error:", err);
-            return { success: false, message: "Server connection failed." };
+            return { success: false, message: "Server connection failed. Is backend running on port 5001?" };
         }
     };
 
@@ -135,7 +123,7 @@ export const CampusProvider = ({ children }) => {
         }
     };
 
-    // Listings: Delete Single Item from MongoDB Atlas
+    // Listings: Delete Single Item
     const deleteListing = async (id) => {
         try {
             await fetch(`${API_BASE}/listings/${id}`, {
@@ -148,7 +136,7 @@ export const CampusProvider = ({ children }) => {
         }
     };
 
-    // Profile: Delete Entire User Account & All Their Uploaded Gear from Cloud
+    // Profile: Delete User Profile & items
     const deleteUserProfile = async () => {
         if (!currentUser) return;
         const userId = currentUser.id || currentUser._id;

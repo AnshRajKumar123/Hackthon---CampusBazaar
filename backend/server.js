@@ -6,10 +6,10 @@ require("dotenv").config();
 
 const app = express();
 
-// Robust CORS Setup for Vercel and Local Development
+// Permissive CORS for local Vite development and LAN devices
 app.use(
     cors({
-        origin: (origin, callback) => callback(null, true),
+        origin: true,
         credentials: true,
         methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
@@ -20,20 +20,16 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve uploaded media publicly
+// Serve uploaded photos publicly
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// Health and Root Sanity Checks
+// Health & Ping Endpoints
 app.get("/", (req, res) => {
-    res.send("CampusBazaar API is running live on Render.");
+    res.send("CampusBazaar API is running locally.");
 });
 
 app.get("/api/health", (req, res) => {
-    res.json({
-        status: "ok",
-        environment: process.env.NODE_ENV || "production",
-        timestamp: new Date(),
-    });
+    res.json({ status: "ok", timestamp: new Date() });
 });
 
 // Route Handlers
@@ -46,10 +42,9 @@ mongoose
     .then(() => console.log("MongoDB Atlas Connected successfully."))
     .catch((err) => console.error("MongoDB Atlas connection error:", err));
 
-// Render automatically provisions PORT; default to 5001 locally
-const PORT = process.env.PORT || 10000;
+// Local Development Port
+const PORT = process.env.PORT || 5001;
 
-// Binding to 0.0.0.0 is required for Render's reverse proxy to route traffic
-app.listen(PORT, "0.0.0.0", () => {
-    console.log(`CampusBazaar server running on port ${PORT}`);
+app.listen(PORT, () => {
+    console.log(`CampusBazaar server running on http://localhost:${PORT}`);
 });
