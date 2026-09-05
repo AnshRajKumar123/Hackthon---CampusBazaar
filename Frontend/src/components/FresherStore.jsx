@@ -131,7 +131,7 @@ const FresherStore = ({ onRentClick }) => {
 
                                     <div className="CardActionsRow">
                                         <a
-                                            href={`https://wa.me/${item.studentPhone?.replace(/[^0-9]/g, "")}?text=Hi%20${encodeURIComponent(item.studentName)},%20I%20saw%20your%20listing%20for%20"${encodeURIComponent(item.itemTitle)}"%20on%20DBU%20CampusEx.`}
+                                            href={`https://wa.me/${item.studentPhone?.replace(/[^0-9]/g, "")}?text=Hi%20${encodeURIComponent(item.studentName)},%20I%20saw%20your%20listing%20for%20"${encodeURIComponent(item.itemTitle)}"%20on%20DBU%20CampusBazaar.`}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="WhatsAppActionBtn"

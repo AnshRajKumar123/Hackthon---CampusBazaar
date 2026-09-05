@@ -433,8 +433,14 @@ const StudentListingForm = () => {
                             <div className="ClusterHeader">
                                 <span className="ClusterStepNumber">4</span>
                                 <div>
-                                    <h4>Real Photos (Upload 1 to 3 Images) *</h4>
-                                    <small>Capture or select photos from your device camera or gallery</small>
+                                    <h4>
+                                        Real Photos ({imagePreviews.length}/3 Uploaded) *
+                                    </h4>
+                                    <small>
+                                        {imagePreviews.length === 3
+                                            ? "Maximum 3 images reached. Remove an image to change it."
+                                            : `Upload ${3 - imagePreviews.length} more photo${3 - imagePreviews.length > 1 ? "s" : ""} from your camera or gallery`}
+                                    </small>
                                 </div>
                             </div>
 

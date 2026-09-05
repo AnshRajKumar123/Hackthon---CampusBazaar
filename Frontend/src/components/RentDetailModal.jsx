@@ -15,7 +15,7 @@ const RentDetailModal = ({ item, onClose }) => {
         item.studentName || "Student"
     )},%20I%20saw%20your%20listing%20"${encodeURIComponent(
         item.itemTitle || "Item"
-    )}"%20on%20DBU%20CampusEx.%20Is%20it%20available%20for%20pickup?`;
+    )}"%20on%20DBU%20CampusBazaar.%20Is%20it%20available%20for%20pickup?`;
 
     return (
         <div className="ModalOverlay" onClick={onClose}>
