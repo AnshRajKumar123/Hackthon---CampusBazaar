@@ -3,21 +3,28 @@ import { useCampus } from "../context/CampusContext";
 import "../styles/FresherStore.css";
 
 // Resolves relative backend paths against the active host IP for mobile & laptop compatibility
+const PRODUCTION_URL = "https://campusbazaar-backend-ajve.onrender.com";
+
 export const getImageUrl = (imagePath) => {
     if (!imagePath) return "https://placehold.co/400x300?text=No+Photo";
 
-    // If it's already a full external web link or base64 data URL
     if (
         imagePath.startsWith("http://") ||
         imagePath.startsWith("https://") ||
         imagePath.startsWith("data:")
     ) {
-        // If it mistakenly has "localhost:5001" saved from before, replace with actual hostname
-        return imagePath.replace("localhost", window.location.hostname);
+        return imagePath;
     }
 
-    // Prepend current device host IP and backend port 5001
-    return `http://${window.location.hostname}:5001${imagePath.startsWith("/") ? "" : "/"}${imagePath}`;
+    const isLocal =
+        window.location.hostname === "localhost" ||
+        window.location.hostname.startsWith("10.") ||
+        window.location.hostname.startsWith("192.") ||
+        window.location.hostname === "127.0.0.1";
+
+    const baseUrl = import.meta.env.VITE_API_URL || (isLocal ? `http://${window.location.hostname}:5001` : PRODUCTION_URL);
+
+    return `${baseUrl}${imagePath.startsWith("/") ? "" : "/"}${imagePath}`;
 };
 
 const hostelFilters = [

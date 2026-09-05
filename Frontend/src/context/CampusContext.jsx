@@ -5,7 +5,6 @@ const CampusContext = createContext();
 // Production Render backend fallback
 const PRODUCTION_API = "https://campusbazaar-backend-ajve.onrender.com";
 
-// Dynamically select Render on Vercel production or local machine during local dev
 const isLocal =
     window.location.hostname === "localhost" ||
     window.location.hostname.startsWith("10.") ||
