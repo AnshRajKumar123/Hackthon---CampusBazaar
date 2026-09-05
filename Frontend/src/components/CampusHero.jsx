@@ -1,5 +1,6 @@
 import React from "react";
 import { useCampus } from "../context/CampusContext";
+import { getImageUrl } from "./FresherStore";
 import "../styles/CampusHero.css";
 
 const CampusHero = ({ onRentClick }) => {
@@ -91,9 +92,13 @@ const CampusHero = ({ onRentClick }) => {
                                 {recentItems.map((item) => (
                                     <div key={item.id} className="EquipmentItemRow">
                                         <img
-                                            src={item.images?.[0]}
+                                            src={getImageUrl(item.images?.[0])}
                                             alt={item.itemTitle}
                                             className="ListingThumb"
+                                            loading="lazy"
+                                            onError={(e) => {
+                                                e.target.src = "https://placehold.co/400x300?text=No+Photo";
+                                            }}
                                         />
                                         <div className="EquipmentDetails">
                                             <span className="ListingBadge">
