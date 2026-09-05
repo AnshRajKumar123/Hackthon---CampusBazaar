@@ -2,107 +2,113 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 
 const CampusContext = createContext();
 
-export const CampusProvider = ({ children }) => {
-    // Safe initial load from localStorage
-    const [listings, setListings] = useState(() => {
-        try {
-            const saved = localStorage.getItem("dbu_live_listings");
-            return saved ? JSON.parse(saved) : [];
-        } catch (e) {
-            console.error("Error reading listings from storage:", e);
-            return [];
-        }
-    });
+// Automatically adapts whether you are opening from laptop (localhost) or phone (local IP)
+const API_BASE = `http://${window.location.hostname}:5000/api`;
 
+export const CampusProvider = ({ children }) => {
+    // Live products loaded from MongoDB Atlas
+    const [listings, setListings] = useState([]);
+    const [isLoadingListings, setIsLoadingListings] = useState(true);
+
+    // Active student session persisted locally
     const [currentUser, setCurrentUser] = useState(() => {
         try {
             const savedUser = localStorage.getItem("dbu_current_user");
             return savedUser ? JSON.parse(savedUser) : null;
         } catch (e) {
-            console.error("Error reading current user from storage:", e);
+            console.error("Failed to load user session:", e);
             return null;
         }
     });
 
-    const [registeredUsers, setRegisteredUsers] = useState(() => {
+    // Fetch all listings from MongoDB Atlas
+    const fetchListings = async () => {
+        setIsLoadingListings(true);
         try {
-            const users = localStorage.getItem("dbu_registered_users");
-            return users ? JSON.parse(users) : [];
-        } catch (e) {
-            console.error("Error reading registered users from storage:", e);
-            return [];
+            const res = await fetch(`${API_BASE}/listings`);
+            const data = await res.json();
+            if (Array.isArray(data)) {
+                // Normalize MongoDB _id to id so all your existing components work seamlessly
+                setListings(data.map((item) => ({ ...item, id: item._id })));
+            }
+        } catch (err) {
+            console.error("Error fetching listings from MongoDB:", err);
+        } finally {
+            setIsLoadingListings(false);
         }
-    });
+    };
 
-    // Guarded sync to localStorage to prevent mobile quota crashes
+    // Initial load from cloud
     useEffect(() => {
-        try {
-            localStorage.setItem("dbu_live_listings", JSON.stringify(listings));
-        } catch (error) {
-            console.error("LocalStorage quota exceeded when saving listings:", error);
-            alert("Storage quota reached on this browser. Please delete an older item or use smaller pictures.");
-        }
-    }, [listings]);
+        fetchListings();
+    }, []);
 
+    // Sync user session to localStorage
     useEffect(() => {
         try {
             if (currentUser) {
                 localStorage.setItem("dbu_current_user", JSON.stringify(currentUser));
             } else {
                 localStorage.removeItem("dbu_current_user");
+                localStorage.removeItem("dbu_auth_token");
             }
         } catch (error) {
             console.error("Error syncing current user:", error);
         }
     }, [currentUser]);
 
-    useEffect(() => {
+    // Auth: Register (Saves student into MongoDB Atlas)
+    const registerUser = async ({ name, rollNo, password, department, hostelBlock, phone }) => {
         try {
-            localStorage.setItem("dbu_registered_users", JSON.stringify(registeredUsers));
-        } catch (error) {
-            console.error("Error syncing registered users:", error);
+            const res = await fetch(`${API_BASE}/auth/register`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name,
+                    rollNo: rollNo.trim(),
+                    password,
+                    department: department || "Computer Science & Engineering",
+                    hostelBlock: hostelBlock || "Block A",
+                    phone: phone || "",
+                }),
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                if (data.token) localStorage.setItem("dbu_auth_token", data.token);
+                setCurrentUser(data.user);
+                return { success: true };
+            }
+            return { success: false, message: data.message || "Registration failed" };
+        } catch (err) {
+            console.error("Register network error:", err);
+            return { success: false, message: "Server connection failed. Is backend running?" };
         }
-    }, [registeredUsers]);
-
-    // Auth: Register
-    const registerUser = ({ name, rollNo, password, department, hostelBlock, phone }) => {
-        const exists = registeredUsers.some(
-            (u) => u.rollNo.toLowerCase() === rollNo.trim().toLowerCase()
-        );
-        if (exists) {
-            return { success: false, message: "A student with this CRM / Roll No is already registered." };
-        }
-
-        const newUser = {
-            id: `usr-${Date.now()}`,
-            name,
-            rollNo: rollNo.trim(),
-            password,
-            department: department || "Computer Science & Engineering",
-            hostelBlock: hostelBlock || "Block A",
-            phone: phone || "",
-            joinedAt: new Date().toLocaleDateString(),
-        };
-
-        setRegisteredUsers((prev) => [...prev, newUser]);
-        setCurrentUser(newUser);
-        return { success: true };
     };
 
-    // Auth: Login
-    const loginUser = (rollNo, password) => {
-        const user = registeredUsers.find(
-            (u) =>
-                u.rollNo.toLowerCase() === rollNo.trim().toLowerCase() &&
-                u.password === password
-        );
+    // Auth: Login (Verifies against MongoDB Atlas bcrypt hash)
+    const loginUser = async (rollNo, password) => {
+        try {
+            const res = await fetch(`${API_BASE}/auth/login`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    rollNo: rollNo.trim(),
+                    password,
+                }),
+            });
 
-        if (!user) {
-            return { success: false, message: "Invalid CRM / Roll No or password." };
+            const data = await res.json();
+            if (data.success) {
+                if (data.token) localStorage.setItem("dbu_auth_token", data.token);
+                setCurrentUser(data.user);
+                return { success: true };
+            }
+            return { success: false, message: data.message || "Invalid credentials" };
+        } catch (err) {
+            console.error("Login network error:", err);
+            return { success: false, message: "Server connection failed. Is backend running?" };
         }
-
-        setCurrentUser(user);
-        return { success: true };
     };
 
     // Auth: Logout
@@ -114,53 +120,62 @@ export const CampusProvider = ({ children }) => {
     const updateUserProfile = (updatedDetails) => {
         const updated = { ...currentUser, ...updatedDetails };
         setCurrentUser(updated);
-        setRegisteredUsers((prev) =>
-            prev.map((u) => (u.rollNo === updated.rollNo ? updated : u))
-        );
     };
 
-    // Listings: Add Item (stamps author rollNo and ID)
-    const addStudentListing = (itemData) => {
-        const newItem = {
-            id: `item-${Date.now()}`,
-            userId: currentUser?.id,
-            userRollNo: currentUser?.rollNo,
-            ...itemData,
-            createdAt: new Date().toISOString(),
-            timestamp: "Just now",
-        };
-        setListings((prev) => [newItem, ...prev]);
-        return newItem;
+    // Listings: Add Item (Saves permanently to MongoDB Atlas)
+    const addStudentListing = async (itemData) => {
+        try {
+            const payload = {
+                ...itemData,
+                userId: currentUser?.id || currentUser?._id,
+                userRollNo: currentUser?.rollNo,
+            };
+
+            const res = await fetch(`${API_BASE}/listings`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
+
+            const created = await res.json();
+            const formatted = { ...created, id: created._id };
+
+            // Add to local state immediately so UI updates instantly
+            setListings((prev) => [formatted, ...prev]);
+            return formatted;
+        } catch (err) {
+            console.error("Failed to save listing to MongoDB:", err);
+        }
     };
 
-    // Listings: Delete Single Item
-    const deleteListing = (id) => {
-        setListings((prev) => prev.filter((item) => item.id !== id));
+    // Listings: Delete Single Item from MongoDB Atlas
+    const deleteListing = async (id) => {
+        try {
+            await fetch(`${API_BASE}/listings/${id}`, {
+                method: "DELETE",
+            });
+            setListings((prev) => prev.filter((item) => item.id !== id));
+        } catch (err) {
+            console.error("Failed to delete listing from DB:", err);
+        }
     };
 
-    // Profile: Delete Entire User Account & All Their Uploaded Gear
-    const deleteUserProfile = () => {
+    // Profile: Delete Entire User Account & All Their Uploaded Items from MongoDB Atlas
+    const deleteUserProfile = async () => {
         if (!currentUser) return;
+        const userId = currentUser.id || currentUser._id;
 
-        // 1. Remove all items created by this student
-        setListings((prevListings) =>
-            prevListings.filter((item) => {
-                if (item.userRollNo) return item.userRollNo !== currentUser.rollNo;
-                if (item.userId) return item.userId !== currentUser.id;
+        try {
+            await fetch(`${API_BASE}/auth/delete-profile/${userId}`, {
+                method: "DELETE",
+            });
 
-                const isSameName = item.studentName?.toLowerCase() === currentUser.name?.toLowerCase();
-                const isSamePhone = currentUser.phone && item.studentPhone === currentUser.phone;
-                return !(isSameName && isSamePhone);
-            })
-        );
-
-        // 2. Remove user from registered student directory
-        setRegisteredUsers((prevUsers) =>
-            prevUsers.filter((u) => u.rollNo.toLowerCase() !== currentUser.rollNo.toLowerCase())
-        );
-
-        // 3. Clear active session (triggers return to login gate)
-        setCurrentUser(null);
+            // Clear local session and re-fetch global store
+            setCurrentUser(null);
+            await fetchListings();
+        } catch (err) {
+            console.error("Failed to delete user profile from DB:", err);
+        }
     };
 
     return (
@@ -168,6 +183,7 @@ export const CampusProvider = ({ children }) => {
             value={{
                 listings,
                 currentUser,
+                isLoadingListings,
                 registerUser,
                 loginUser,
                 logoutUser,
@@ -175,6 +191,7 @@ export const CampusProvider = ({ children }) => {
                 deleteUserProfile,
                 addStudentListing,
                 deleteListing,
+                refreshListings: fetchListings,
             }}
         >
             {children}
