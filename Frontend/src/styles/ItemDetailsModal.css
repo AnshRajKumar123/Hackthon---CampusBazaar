@@ -1,0 +1,237 @@
+.ModalBackdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.ModalCard {
+    background: #ffffff;
+    border-radius: 16px;
+    max-width: 850px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+}
+
+.ModalCloseBtn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: #f1f5f9;
+    border: none;
+    font-size: 1.5rem;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ModalGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    padding: 1.5rem;
+}
+
+@media (min-width: 768px) {
+    .ModalGrid {
+        grid-template-columns: 1.1fr 1fr;
+        padding: 2rem;
+    }
+}
+
+.ModalGallery .MainImageWrapper {
+    position: relative;
+    width: 100%;
+    height: 280px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #f8fafc;
+}
+
+.ModalGallery .MainImageWrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.ModalBadge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border-radius: 6px;
+}
+
+.ModalBadge.rent {
+    background: #0284c7;
+    color: #fff;
+}
+
+.ModalBadge.buy {
+    background: #16a34a;
+    color: #fff;
+}
+
+.ThumbnailsRow {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.ThumbBtn {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid transparent;
+    cursor: pointer;
+    padding: 0;
+    background: #f1f5f9;
+}
+
+.ThumbBtn.active {
+    border-color: #2563eb;
+}
+
+.ThumbBtn img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.CategoryPill {
+    display: inline-block;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+}
+
+.ModalTitle {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 1rem;
+}
+
+.PriceBox {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 12px;
+    padding: 12px;
+    background: #f8fafc;
+    border-radius: 10px;
+    margin-bottom: 1.25rem;
+}
+
+.PriceBox .Price {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.PriceBox .PriceLabel {
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.PriceBox .MrpCrossed {
+    text-decoration: line-through;
+    color: #94a3b8;
+    font-size: 0.9rem;
+}
+
+.DepositNote {
+    width: 100%;
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+.SpecsList {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 1.25rem;
+}
+
+.SpecRow {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.SpecRow i {
+    font-size: 1.2rem;
+    color: #2563eb;
+    margin-top: 2px;
+}
+
+.SpecRow strong {
+    display: block;
+    font-size: 0.85rem;
+    color: #0f172a;
+}
+
+.SpecRow p {
+    font-size: 0.85rem;
+    color: #475569;
+    margin: 0;
+}
+
+.DescriptionBox {
+    margin-bottom: 1.25rem;
+}
+
+.DescriptionBox h4 {
+    font-size: 0.9rem;
+    color: #0f172a;
+    margin-bottom: 4px;
+}
+
+.DescriptionBox p {
+    font-size: 0.85rem;
+    color: #64748b;
+    line-height: 1.4;
+}
+
+.WhatsAppChatBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: #25d366;
+    color: #ffffff;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 1rem;
+    text-decoration: none;
+    transition: opacity 0.2s;
+}
+
+.WhatsAppChatBtn:hover {
+    opacity: 0.9;
+}
+
+.WhatsAppChatBtn i {
+    font-size: 1.4rem;
+}

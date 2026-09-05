@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useCampus } from "../context/CampusContext";
 import "../styles/StudentListingForm.css";
 
-// Reusable Custom Dropdown for StudentListingForm
+// Reusable Custom Dropdown
 const CustomFormSelect = ({ label, icon, value, options, onChange }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
@@ -93,8 +93,8 @@ const categoryOptions = [
     "Calculators & Instruments",
 ];
 
-// Canvas Image Compressor to prevent mobile camera memory crashes
-const compressImage = (file, maxWidth = 800, quality = 0.7) => {
+// In-browser Canvas Compressor: scales down high-res mobile photos
+const compressImage = (file, maxWidth = 900, quality = 0.75) => {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
@@ -120,15 +120,28 @@ const compressImage = (file, maxWidth = 800, quality = 0.7) => {
     });
 };
 
+// Converts compressed Base64 dataURL to real binary File for Multer FormData
+const dataURLtoFile = (dataurl, filename) => {
+    const arr = dataurl.split(",");
+    const mime = arr[0].match(/:(.*?);/)[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new File([u8arr], filename, { type: mime });
+};
+
 const StudentListingForm = () => {
-    const { addStudentListing } = useCampus();
+    const { addStudentListing, currentUser } = useCampus();
 
     const [listingType, setListingType] = useState("rent");
     const [formData, setFormData] = useState({
-        studentName: "",
-        studentPhone: "",
-        department: "Computer Science & Engineering",
-        hostelBlock: "Block A",
+        studentName: currentUser?.name || "",
+        studentPhone: currentUser?.phone || "",
+        department: currentUser?.department || "Computer Science & Engineering",
+        hostelBlock: currentUser?.hostelBlock || "Block A",
         itemTitle: "",
         category: "Drawing & Drafting",
         rentPerDay: "",
@@ -142,7 +155,21 @@ const StudentListingForm = () => {
 
     const [imagePreviews, setImagePreviews] = useState([]);
     const [isCompressing, setIsCompressing] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [successToast, setSuccessToast] = useState(false);
+
+    // Sync profile values if user logs in after page mount
+    useEffect(() => {
+        if (currentUser) {
+            setFormData((prev) => ({
+                ...prev,
+                studentName: prev.studentName || currentUser.name || "",
+                studentPhone: prev.studentPhone || currentUser.phone || "",
+                department: currentUser.department || prev.department,
+                hostelBlock: currentUser.hostelBlock || prev.hostelBlock,
+            }));
+        }
+    }, [currentUser]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -165,12 +192,12 @@ const StudentListingForm = () => {
         setIsCompressing(true);
         try {
             for (const file of files) {
-                const compressedBase64 = await compressImage(file, 800, 0.7);
+                const compressedBase64 = await compressImage(file, 900, 0.75);
                 setImagePreviews((prev) => [...prev, compressedBase64]);
             }
         } catch (err) {
             console.error("Image optimization failed:", err);
-            alert("Failed to process image. Please try another photo.");
+            alert("Failed to process photo. Please try another image.");
         } finally {
             setIsCompressing(false);
         }
@@ -180,45 +207,69 @@ const StudentListingForm = () => {
         setImagePreviews((prev) => prev.filter((_, i) => i !== index));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         if (imagePreviews.length === 0) {
-            alert("Please upload at least 1 real photo of your item.");
+            alert("Please upload at least 1 photo of your item.");
             return;
         }
 
-        addStudentListing({
-            type: listingType,
-            ...formData,
-            rentPerDay: listingType === "rent" ? Number(formData.rentPerDay) : null,
-            rentPerWeek: listingType === "rent" ? Number(formData.rentPerWeek) : null,
-            refundableDeposit: listingType === "rent" ? Number(formData.refundableDeposit) || 0 : null,
-            buyPrice: listingType === "buy" ? Number(formData.buyPrice) : null,
-            originalMrp: listingType === "buy" ? Number(formData.originalMrp) || null : null,
-            images: imagePreviews,
-        });
+        setIsSubmitting(true);
 
-        setSuccessToast(true);
+        try {
+            const payload = new FormData();
+            payload.append("type", listingType);
+            payload.append("studentName", formData.studentName);
+            payload.append("studentPhone", formData.studentPhone);
+            payload.append("department", formData.department);
+            payload.append("hostelBlock", formData.hostelBlock);
+            payload.append("itemTitle", formData.itemTitle);
+            payload.append("category", formData.category);
+            payload.append("condition", formData.condition);
+            payload.append("description", formData.description);
 
-        setFormData({
-            studentName: "",
-            studentPhone: "",
-            department: "Computer Science & Engineering",
-            hostelBlock: "Block A",
-            itemTitle: "",
-            category: "Drawing & Drafting",
-            rentPerDay: "",
-            rentPerWeek: "",
-            refundableDeposit: "",
-            buyPrice: "",
-            originalMrp: "",
-            condition: "Good Condition (Fully functional)",
-            description: "",
-        });
-        setImagePreviews([]);
+            if (listingType === "rent") {
+                payload.append("rentPerDay", Number(formData.rentPerDay));
+                payload.append("rentPerWeek", Number(formData.rentPerWeek));
+                payload.append("refundableDeposit", Number(formData.refundableDeposit) || 0);
+            } else {
+                payload.append("buyPrice", Number(formData.buyPrice));
+                payload.append("originalMrp", Number(formData.originalMrp) || 0);
+            }
 
-        setTimeout(() => setSuccessToast(false), 4000);
+            // Convert compressed previews into binary files for Multer
+            imagePreviews.forEach((base64, index) => {
+                const file = dataURLtoFile(base64, `gear_${Date.now()}_${index}.jpg`);
+                payload.append("images", file);
+            });
+
+            await addStudentListing(payload);
+
+            setSuccessToast(true);
+            setFormData({
+                studentName: currentUser?.name || "",
+                studentPhone: currentUser?.phone || "",
+                department: currentUser?.department || "Computer Science & Engineering",
+                hostelBlock: currentUser?.hostelBlock || "Block A",
+                itemTitle: "",
+                category: "Drawing & Drafting",
+                rentPerDay: "",
+                rentPerWeek: "",
+                refundableDeposit: "",
+                buyPrice: "",
+                originalMrp: "",
+                condition: "Good Condition (Fully functional)",
+                description: "",
+            });
+            setImagePreviews([]);
+            setTimeout(() => setSuccessToast(false), 4000);
+        } catch (err) {
+            console.error("Submission failed:", err);
+            alert("Could not publish item. Please ensure backend is running.");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -237,7 +288,7 @@ const StudentListingForm = () => {
                         <i className="bx bxs-check-circle"></i>
                         <div>
                             <strong>Item Added Successfully!</strong>
-                            <p>Your item is now live on the website and mobile app in the Hero and Store sections.</p>
+                            <p>Your item is now live in MongoDB Atlas and available to all students across campus.</p>
                         </div>
                     </div>
                 )}
@@ -263,13 +314,13 @@ const StudentListingForm = () => {
                     </div>
 
                     <form onSubmit={handleSubmit} className="MainStudentForm">
-                        {/* 1. Student Info */}
+                        {/* 1. Student Contact Info */}
                         <div className="FormCluster">
                             <div className="ClusterHeader">
                                 <span className="ClusterStepNumber">1</span>
                                 <div>
                                     <h4>Your Student Contact Details</h4>
-                                    <small>For WhatsApp and on-campus physical hand-off</small>
+                                    <small>Used for WhatsApp communication and campus physical hand-off</small>
                                 </div>
                             </div>
 
@@ -326,13 +377,13 @@ const StudentListingForm = () => {
                             </div>
                         </div>
 
-                        {/* 2. Item Info */}
+                        {/* 2. Item Information */}
                         <div className="FormCluster">
                             <div className="ClusterHeader">
                                 <span className="ClusterStepNumber">2</span>
                                 <div>
                                     <h4>Item Details</h4>
-                                    <small>Give a clear title and specify included accessories</small>
+                                    <small>Give an accurate title and state what comes included</small>
                                 </div>
                             </div>
 
@@ -363,7 +414,7 @@ const StudentListingForm = () => {
                                 <textarea
                                     name="description"
                                     rows="2"
-                                    placeholder="e.g. Scales are clear, locking screw works perfectly. Can test before taking."
+                                    placeholder="e.g. Scales are clear, locking screw works perfectly. Can inspect before taking."
                                     value={formData.description}
                                     onChange={handleInputChange}
                                 ></textarea>
@@ -376,7 +427,7 @@ const StudentListingForm = () => {
                                 <span className="ClusterStepNumber">3</span>
                                 <div>
                                     <h4>{listingType === "rent" ? "Rental Rates & Security" : "Sale Price"}</h4>
-                                    <small>Set fair student prices</small>
+                                    <small>Set transparent pricing for students</small>
                                 </div>
                             </div>
 
@@ -463,7 +514,7 @@ const StudentListingForm = () => {
                             )}
                         </div>
 
-                        {/* 4. Real Image Upload */}
+                        {/* 4. Real Photos */}
                         <div className="FormCluster">
                             <div className="ClusterHeader">
                                 <span className="ClusterStepNumber">4</span>
@@ -480,8 +531,8 @@ const StudentListingForm = () => {
                             <div className="ImageUploadDeck">
                                 <label className={`ImagePickerDropzone ${imagePreviews.length >= 3 ? "disabled" : ""}`}>
                                     <i className={`bx ${isCompressing ? "bx-loader-alt bx-spin" : "bx-camera"}`}></i>
-                                    <span>{isCompressing ? "Optimizing photo..." : "Tap to Capture / Choose Photos"}</span>
-                                    <small>Device camera photos auto-compressed for instant mobile upload</small>
+                                    <span>{isCompressing ? "Compressing photo..." : "Tap to Capture / Choose Photos"}</span>
+                                    <small>Camera photos automatically resized to preserve performance</small>
                                     <input
                                         type="file"
                                         accept="image/*"
@@ -494,7 +545,7 @@ const StudentListingForm = () => {
                                 <div className="PreviewsGrid">
                                     {imagePreviews.map((src, index) => (
                                         <div key={index} className="PreviewCard">
-                                            <img src={src} alt={`Real upload ${index + 1}`} />
+                                            <img src={src} alt={`Upload preview ${index + 1}`} />
                                             <button
                                                 type="button"
                                                 className="RemoveImgBtn"
@@ -509,9 +560,13 @@ const StudentListingForm = () => {
                         </div>
 
                         <div className="FormActionDeck">
-                            <button type="submit" className="SubmitListingBtn" disabled={isCompressing}>
-                                <i className="bx bx-upload"></i>
-                                <span>Publish Item Now</span>
+                            <button
+                                type="submit"
+                                className="SubmitListingBtn"
+                                disabled={isCompressing || isSubmitting}
+                            >
+                                <i className={`bx ${isSubmitting ? "bx-loader-alt bx-spin" : "bx-upload"}`}></i>
+                                <span>{isSubmitting ? "Uploading to Cloud..." : "Publish Item Now"}</span>
                             </button>
                         </div>
                     </form>

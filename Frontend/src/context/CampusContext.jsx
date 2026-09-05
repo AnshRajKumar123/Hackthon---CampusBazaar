@@ -2,33 +2,31 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 
 const CampusContext = createContext();
 
-// Automatically adapts whether you are opening from laptop (localhost) or phone (local IP)
+// Automatically targets localhost on desktop and your LAN IP on mobile
 const API_BASE = `http://${window.location.hostname}:5000/api`;
 
 export const CampusProvider = ({ children }) => {
-    // Live products loaded from MongoDB Atlas
     const [listings, setListings] = useState([]);
     const [isLoadingListings, setIsLoadingListings] = useState(true);
 
-    // Active student session persisted locally
+    // Synchronize authenticated session state
     const [currentUser, setCurrentUser] = useState(() => {
         try {
             const savedUser = localStorage.getItem("dbu_current_user");
             return savedUser ? JSON.parse(savedUser) : null;
-        } catch (e) {
-            console.error("Failed to load user session:", e);
+        } catch {
             return null;
         }
     });
 
-    // Fetch all listings from MongoDB Atlas
+    // Pull all live listings from MongoDB Atlas
     const fetchListings = async () => {
         setIsLoadingListings(true);
         try {
             const res = await fetch(`${API_BASE}/listings`);
             const data = await res.json();
             if (Array.isArray(data)) {
-                // Normalize MongoDB _id to id so all your existing components work seamlessly
+                // Normalize _id to id so all React components keep running seamlessly
                 setListings(data.map((item) => ({ ...item, id: item._id })));
             }
         } catch (err) {
@@ -38,12 +36,11 @@ export const CampusProvider = ({ children }) => {
         }
     };
 
-    // Initial load from cloud
     useEffect(() => {
         fetchListings();
     }, []);
 
-    // Sync user session to localStorage
+    // Sync current user session locally
     useEffect(() => {
         try {
             if (currentUser) {
@@ -53,11 +50,11 @@ export const CampusProvider = ({ children }) => {
                 localStorage.removeItem("dbu_auth_token");
             }
         } catch (error) {
-            console.error("Error syncing current user:", error);
+            console.error("Failed to sync user storage:", error);
         }
     }, [currentUser]);
 
-    // Auth: Register (Saves student into MongoDB Atlas)
+    // Auth: Register User in MongoDB
     const registerUser = async ({ name, rollNo, password, department, hostelBlock, phone }) => {
         try {
             const res = await fetch(`${API_BASE}/auth/register`, {
@@ -81,12 +78,12 @@ export const CampusProvider = ({ children }) => {
             }
             return { success: false, message: data.message || "Registration failed" };
         } catch (err) {
-            console.error("Register network error:", err);
-            return { success: false, message: "Server connection failed. Is backend running?" };
+            console.error("Registration error:", err);
+            return { success: false, message: "Server connection failed. Is backend running on port 5000?" };
         }
     };
 
-    // Auth: Login (Verifies against MongoDB Atlas bcrypt hash)
+    // Auth: Login User against MongoDB Atlas
     const loginUser = async (rollNo, password) => {
         try {
             const res = await fetch(`${API_BASE}/auth/login`, {
@@ -106,8 +103,8 @@ export const CampusProvider = ({ children }) => {
             }
             return { success: false, message: data.message || "Invalid credentials" };
         } catch (err) {
-            console.error("Login network error:", err);
-            return { success: false, message: "Server connection failed. Is backend running?" };
+            console.error("Login error:", err);
+            return { success: false, message: "Server connection failed. Is backend running on port 5000?" };
         }
     };
 
@@ -116,35 +113,34 @@ export const CampusProvider = ({ children }) => {
         setCurrentUser(null);
     };
 
-    // Update Profile Details
+    // Profile: In-session detail update
     const updateUserProfile = (updatedDetails) => {
-        const updated = { ...currentUser, ...updatedDetails };
-        setCurrentUser(updated);
+        setCurrentUser((prev) => ({ ...prev, ...updatedDetails }));
     };
 
-    // Listings: Add Item (Saves permanently to MongoDB Atlas)
-    const addStudentListing = async (itemData) => {
+    // Listings: Post item with Multer multipart/form-data
+    const addStudentListing = async (formDataPayload) => {
         try {
-            const payload = {
-                ...itemData,
-                userId: currentUser?.id || currentUser?._id,
-                userRollNo: currentUser?.rollNo,
-            };
+            if (currentUser) {
+                formDataPayload.append("userId", currentUser.id || currentUser._id);
+                formDataPayload.append("userRollNo", currentUser.rollNo);
+            }
 
+            // Do not manually set Content-Type header so the browser includes the multipart boundary
             const res = await fetch(`${API_BASE}/listings`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
+                body: formDataPayload,
             });
 
             const created = await res.json();
             const formatted = { ...created, id: created._id };
 
-            // Add to local state immediately so UI updates instantly
+            // Prepend the new item immediately so UI updates without a reload
             setListings((prev) => [formatted, ...prev]);
             return formatted;
         } catch (err) {
-            console.error("Failed to save listing to MongoDB:", err);
+            console.error("Error creating listing in backend:", err);
+            throw err;
         }
     };
 
@@ -156,11 +152,11 @@ export const CampusProvider = ({ children }) => {
             });
             setListings((prev) => prev.filter((item) => item.id !== id));
         } catch (err) {
-            console.error("Failed to delete listing from DB:", err);
+            console.error("Failed to delete listing:", err);
         }
     };
 
-    // Profile: Delete Entire User Account & All Their Uploaded Items from MongoDB Atlas
+    // Profile: Delete Entire User Account & All Their Uploaded Gear from Cloud
     const deleteUserProfile = async () => {
         if (!currentUser) return;
         const userId = currentUser.id || currentUser._id;
@@ -170,7 +166,6 @@ export const CampusProvider = ({ children }) => {
                 method: "DELETE",
             });
 
-            // Clear local session and re-fetch global store
             setCurrentUser(null);
             await fetchListings();
         } catch (err) {
