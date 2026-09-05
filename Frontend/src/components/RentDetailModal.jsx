@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { getImageUrl } from "./FresherStore";
 import "../styles/RentDetailModal.css";
 
 const RentDetailModal = ({ item, onClose }) => {
@@ -8,10 +9,13 @@ const RentDetailModal = ({ item, onClose }) => {
 
     const images = item.images && item.images.length > 0
         ? item.images
-        : ["https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80"];
+        : ["https://placehold.co/600x400?text=No+Image"];
 
-    const cleanPhone = (item.studentPhone || "").replace(/[^0-9]/g, "");
-    const whatsappUrl = `https://wa.me/${cleanPhone}?text=Hello%20${encodeURIComponent(
+    // Format phone with Indian country code prefix (91) for direct WhatsApp URL
+    const cleanDigits = (item.studentPhone || "").replace(/[^0-9]/g, "");
+    const formattedPhone = cleanDigits.length === 10 ? `91${cleanDigits}` : cleanDigits;
+
+    const whatsappUrl = `https://wa.me/${formattedPhone}?text=Hello%20${encodeURIComponent(
         item.studentName || "Student"
     )},%20I%20saw%20your%20listing%20"${encodeURIComponent(
         item.itemTitle || "Item"
@@ -28,7 +32,13 @@ const RentDetailModal = ({ item, onClose }) => {
                     {/* Gallery Column */}
                     <div className="ModalGalleryCol">
                         <div className="MainImageContainer">
-                            <img src={images[activeImageIndex]} alt={item.itemTitle} />
+                            <img
+                                src={getImageUrl(images[activeImageIndex])}
+                                alt={item.itemTitle}
+                                onError={(e) => {
+                                    e.target.src = "https://placehold.co/600x400?text=No+Photo";
+                                }}
+                            />
                             <span className={`ModalTypePill ${item.type === "rent" ? "rent" : "buy"}`}>
                                 {item.type === "rent" ? "For Rent" : "For Sale"}
                             </span>
@@ -43,7 +53,13 @@ const RentDetailModal = ({ item, onClose }) => {
                                         className={`ThumbButton ${idx === activeImageIndex ? "selected" : ""}`}
                                         onClick={() => setActiveImageIndex(idx)}
                                     >
-                                        <img src={imgSrc} alt={`Thumbnail ${idx + 1}`} />
+                                        <img
+                                            src={getImageUrl(imgSrc)}
+                                            alt={`Thumbnail ${idx + 1}`}
+                                            onError={(e) => {
+                                                e.target.src = "https://placehold.co/100x100?text=Thumb";
+                                            }}
+                                        />
                                     </button>
                                 ))}
                             </div>
