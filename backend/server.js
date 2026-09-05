@@ -6,36 +6,15 @@ require("dotenv").config();
 
 const app = express();
 
-// Explicit allowed origins for local dev and live Vercel deployments
-const allowedOrigins = [
-    "http://localhost:5173",
-    "https://campusbazaar-dbu.vercel.app",
-    "https://campusbazaar-mu.vercel.app"
-];
-
-const corsOptions = {
-    origin: function (origin, callback) {
-        // Allow non-browser requests or any subdomains on vercel.app / local LAN
-        if (
-            !origin ||
-            allowedOrigins.includes(origin) ||
-            origin.endsWith(".vercel.app") ||
-            origin.includes("10.201.") ||
-            origin.includes("192.168.")
-        ) {
-            callback(null, true);
-        } else {
-            callback(null, true); // Permissive fallback to ensure no blockage
-        }
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-};
-
-app.use(cors(corsOptions));
-// Handle CORS preflight explicitly across all routes
-app.options("*", cors(corsOptions));
+// Standard robust CORS setup
+app.use(
+    cors({
+        origin: (origin, callback) => callback(null, true), // Automatically reflects requesting origin
+        credentials: true,
+        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+    })
+);
 
 // Body Parsers
 app.use(express.json());
