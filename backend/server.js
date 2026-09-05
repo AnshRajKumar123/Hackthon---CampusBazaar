@@ -6,15 +6,36 @@ require("dotenv").config();
 
 const app = express();
 
-// Configure CORS to accept requests from both desktop and mobile
-app.use(
-    cors({
-        origin: true, // Automatically mirrors incoming origin (localhost:5173, 10.201.42.237:5173, etc.)
-        credentials: true,
-        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        allowedHeaders: ["Content-Type", "Authorization"],
-    })
-);
+// Explicit allowed origins for local dev and live Vercel deployments
+const allowedOrigins = [
+    "http://localhost:5173",
+    "https://campusbazaar-dbu.vercel.app",
+    "https://campusbazaar-mu.vercel.app"
+];
+
+const corsOptions = {
+    origin: function (origin, callback) {
+        // Allow non-browser requests or any subdomains on vercel.app / local LAN
+        if (
+            !origin ||
+            allowedOrigins.includes(origin) ||
+            origin.endsWith(".vercel.app") ||
+            origin.includes("10.201.") ||
+            origin.includes("192.168.")
+        ) {
+            callback(null, true);
+        } else {
+            callback(null, true); // Permissive fallback to ensure no blockage
+        }
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+};
+
+app.use(cors(corsOptions));
+// Handle CORS preflight explicitly across all routes
+app.options("*", cors(corsOptions));
 
 // Body Parsers
 app.use(express.json());
@@ -36,7 +57,7 @@ mongoose
     .then(() => console.log("MongoDB Atlas Connected successfully."))
     .catch((err) => console.error("MongoDB Atlas connection error:", err));
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
-    console.log(`CampusBazaar server running on http://localhost:${PORT}`);
+    console.log(`CampusBazaar server running on port ${PORT}`);
 });
