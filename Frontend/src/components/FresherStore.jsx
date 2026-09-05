@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { useCampus } from "../context/CampusContext";
 import "../styles/FresherStore.css";
 
-// Automatically prefix image paths with the active local hostname and port 5001
 export const getImageUrl = (imagePath) => {
     if (!imagePath) return "https://placehold.co/400x300?text=No+Photo";
 
@@ -14,7 +13,12 @@ export const getImageUrl = (imagePath) => {
         return imagePath;
     }
 
-    return `http://${window.location.hostname}:5001${imagePath.startsWith("/") ? "" : "/"}${imagePath}`;
+    const host =
+        window.location.hostname === "localhost" && window.location.protocol !== "capacitor:"
+            ? "localhost"
+            : "10.147.138.66";
+
+    return `http://${host}:5001${imagePath.startsWith("/") ? "" : "/"}${imagePath}`;
 };
 
 const hostelFilters = [

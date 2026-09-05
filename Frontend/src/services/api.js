@@ -1,4 +1,9 @@
-const API_BASE = `http://${window.location.hostname}:5001/api`;
+const BACKEND_HOST =
+    window.location.hostname === "localhost" && window.location.protocol !== "capacitor:"
+        ? "localhost"
+        : "10.147.138.66";
+
+const API_BASE = `http://${BACKEND_HOST}:5001/api`;
 
 export const api = {
     // Auth

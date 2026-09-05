@@ -2,8 +2,13 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 
 const CampusContext = createContext();
 
-// Localhost / Local Area Network targeting on port 5001
-const API_BASE = `http://${window.location.hostname}:5001/api`;
+// Uses 10.147.130.66 so both Mac browser and Android Studio emulator can connect
+const BACKEND_HOST =
+    window.location.hostname === "localhost" && window.location.protocol !== "capacitor:"
+        ? "localhost"
+        : "10.147.138.66";
+
+const API_BASE = `http://${BACKEND_HOST}:5001/api`;
 
 export const CampusProvider = ({ children }) => {
     const [listings, setListings] = useState([]);
