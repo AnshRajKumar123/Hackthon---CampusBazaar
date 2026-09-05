@@ -45,6 +45,6 @@ mongoose
 // Local Development Port
 const PORT = process.env.PORT || 5001;
 
-app.listen(PORT, () => {
-    console.log(`CampusBazaar server running on http://localhost:${PORT}`);
+app.listen(PORT, "0.0.0.0", () => {
+    console.log(`CampusBazaar server running on port ${PORT}`);
 });
