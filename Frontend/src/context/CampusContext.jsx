@@ -3,41 +3,65 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 const CampusContext = createContext();
 
 export const CampusProvider = ({ children }) => {
-    // Listings State
+    // Safe initial load from localStorage
     const [listings, setListings] = useState(() => {
-        const saved = localStorage.getItem("dbu_live_listings");
-        return saved ? JSON.parse(saved) : [];
+        try {
+            const saved = localStorage.getItem("dbu_live_listings");
+            return saved ? JSON.parse(saved) : [];
+        } catch (e) {
+            console.error("Error reading listings from storage:", e);
+            return [];
+        }
     });
 
-    // Current Logged-in User
     const [currentUser, setCurrentUser] = useState(() => {
-        const savedUser = localStorage.getItem("dbu_current_user");
-        return savedUser ? JSON.parse(savedUser) : null;
+        try {
+            const savedUser = localStorage.getItem("dbu_current_user");
+            return savedUser ? JSON.parse(savedUser) : null;
+        } catch (e) {
+            console.error("Error reading current user from storage:", e);
+            return null;
+        }
     });
 
-    // Registered Users Directory
     const [registeredUsers, setRegisteredUsers] = useState(() => {
-        const users = localStorage.getItem("dbu_registered_users");
-        return users ? JSON.parse(users) : [];
+        try {
+            const users = localStorage.getItem("dbu_registered_users");
+            return users ? JSON.parse(users) : [];
+        } catch (e) {
+            console.error("Error reading registered users from storage:", e);
+            return [];
+        }
     });
 
-    // Sync Listings to LocalStorage
+    // Guarded sync to localStorage to prevent mobile quota crashes
     useEffect(() => {
-        localStorage.setItem("dbu_live_listings", JSON.stringify(listings));
+        try {
+            localStorage.setItem("dbu_live_listings", JSON.stringify(listings));
+        } catch (error) {
+            console.error("LocalStorage quota exceeded when saving listings:", error);
+            alert("Storage quota reached on this browser. Please delete an older item or use smaller pictures.");
+        }
     }, [listings]);
 
-    // Sync Current User Session to LocalStorage
     useEffect(() => {
-        if (currentUser) {
-            localStorage.setItem("dbu_current_user", JSON.stringify(currentUser));
-        } else {
-            localStorage.removeItem("dbu_current_user");
+        try {
+            if (currentUser) {
+                localStorage.setItem("dbu_current_user", JSON.stringify(currentUser));
+            } else {
+                localStorage.removeItem("dbu_current_user");
+            }
+        } catch (error) {
+            console.error("Error syncing current user:", error);
         }
     }, [currentUser]);
 
-    // Sync Registered Users Database to LocalStorage
     useEffect(() => {
-        localStorage.setItem("dbu_registered_users", JSON.stringify(registeredUsers));
+        try {
+            localStorage.setItem("dbu_registered_users", JSON.stringify(registeredUsers));
+        } catch (error) {
+            console.error("Error syncing registered users:", error);
+        }
     }, [registeredUsers]);
 
     // Auth: Register
@@ -54,7 +78,7 @@ export const CampusProvider = ({ children }) => {
             name,
             rollNo: rollNo.trim(),
             password,
-            department: department || "Mechanical Engineering",
+            department: department || "Computer Science & Engineering",
             hostelBlock: hostelBlock || "Block A",
             phone: phone || "",
             joinedAt: new Date().toLocaleDateString(),
@@ -95,7 +119,7 @@ export const CampusProvider = ({ children }) => {
         );
     };
 
-    // Listings: Add Item (Automatically stamps author rollNo and ID)
+    // Listings: Add Item (stamps author rollNo and ID)
     const addStudentListing = (itemData) => {
         const newItem = {
             id: `item-${Date.now()}`,
@@ -118,10 +142,9 @@ export const CampusProvider = ({ children }) => {
     const deleteUserProfile = () => {
         if (!currentUser) return;
 
-        // 1. Remove all items created by this exact student
+        // 1. Remove all items created by this student
         setListings((prevListings) =>
             prevListings.filter((item) => {
-                // Match by userRollNo / userId if available, fallback safely to name & non-empty phone
                 if (item.userRollNo) return item.userRollNo !== currentUser.rollNo;
                 if (item.userId) return item.userId !== currentUser.id;
 

@@ -93,6 +93,33 @@ const categoryOptions = [
     "Calculators & Instruments",
 ];
 
+// Canvas Image Compressor to prevent mobile camera memory crashes
+const compressImage = (file, maxWidth = 800, quality = 0.7) => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = () => {
+                let { width, height } = img;
+                if (width > maxWidth) {
+                    height = Math.round((height * maxWidth) / width);
+                    width = maxWidth;
+                }
+                const canvas = document.createElement("canvas");
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(img, 0, 0, width, height);
+                resolve(canvas.toDataURL("image/jpeg", quality));
+            };
+            img.onerror = (err) => reject(err);
+        };
+        reader.onerror = (err) => reject(err);
+    });
+};
+
 const StudentListingForm = () => {
     const { addStudentListing } = useCampus();
 
@@ -114,6 +141,7 @@ const StudentListingForm = () => {
     });
 
     const [imagePreviews, setImagePreviews] = useState([]);
+    const [isCompressing, setIsCompressing] = useState(false);
     const [successToast, setSuccessToast] = useState(false);
 
     const handleInputChange = (e) => {
@@ -125,20 +153,27 @@ const StudentListingForm = () => {
         setFormData((prev) => ({ ...prev, [field]: val }));
     };
 
-    const handleImageUpload = (e) => {
+    const handleImageUpload = async (e) => {
         const files = Array.from(e.target.files);
+        if (!files.length) return;
+
         if (files.length + imagePreviews.length > 3) {
             alert("You can upload a maximum of 3 photos.");
             return;
         }
 
-        files.forEach((file) => {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setImagePreviews((prev) => [...prev, reader.result]);
-            };
-            reader.readAsDataURL(file);
-        });
+        setIsCompressing(true);
+        try {
+            for (const file of files) {
+                const compressedBase64 = await compressImage(file, 800, 0.7);
+                setImagePreviews((prev) => [...prev, compressedBase64]);
+            }
+        } catch (err) {
+            console.error("Image optimization failed:", err);
+            alert("Failed to process image. Please try another photo.");
+        } finally {
+            setIsCompressing(false);
+        }
     };
 
     const handleRemoveImage = (index) => {
@@ -433,9 +468,7 @@ const StudentListingForm = () => {
                             <div className="ClusterHeader">
                                 <span className="ClusterStepNumber">4</span>
                                 <div>
-                                    <h4>
-                                        Real Photos ({imagePreviews.length}/3 Uploaded) *
-                                    </h4>
+                                    <h4>Real Photos ({imagePreviews.length}/3 Uploaded) *</h4>
                                     <small>
                                         {imagePreviews.length === 3
                                             ? "Maximum 3 images reached. Remove an image to change it."
@@ -445,16 +478,16 @@ const StudentListingForm = () => {
                             </div>
 
                             <div className="ImageUploadDeck">
-                                <label className="ImagePickerDropzone">
-                                    <i className="bx bx-camera"></i>
-                                    <span>Tap to Capture / Choose Photos</span>
-                                    <small>Device photos automatically formatted</small>
+                                <label className={`ImagePickerDropzone ${imagePreviews.length >= 3 ? "disabled" : ""}`}>
+                                    <i className={`bx ${isCompressing ? "bx-loader-alt bx-spin" : "bx-camera"}`}></i>
+                                    <span>{isCompressing ? "Optimizing photo..." : "Tap to Capture / Choose Photos"}</span>
+                                    <small>Device camera photos auto-compressed for instant mobile upload</small>
                                     <input
                                         type="file"
                                         accept="image/*"
                                         multiple
                                         onChange={handleImageUpload}
-                                        disabled={imagePreviews.length >= 3}
+                                        disabled={imagePreviews.length >= 3 || isCompressing}
                                     />
                                 </label>
 
@@ -476,7 +509,7 @@ const StudentListingForm = () => {
                         </div>
 
                         <div className="FormActionDeck">
-                            <button type="submit" className="SubmitListingBtn">
+                            <button type="submit" className="SubmitListingBtn" disabled={isCompressing}>
                                 <i className="bx bx-upload"></i>
                                 <span>Publish Item Now</span>
                             </button>
