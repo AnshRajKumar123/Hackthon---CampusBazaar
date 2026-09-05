@@ -8,12 +8,12 @@ const app = express();
 
 // Standard robust CORS setup
 app.use(
-    cors({
-        origin: (origin, callback) => callback(null, true), // Automatically reflects requesting origin
-        credentials: true,
-        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-    })
+  cors({
+    origin: (origin, callback) => callback(null, true), // Automatically reflects requesting origin
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  })
 );
 
 // Body Parsers
@@ -32,11 +32,11 @@ app.get("/api/health", (req, res) => res.json({ status: "ok", time: new Date() }
 
 // MongoDB Atlas Connection
 mongoose
-    .connect(process.env.MONGO_URI)
-    .then(() => console.log("MongoDB Atlas Connected successfully."))
-    .catch((err) => console.error("MongoDB Atlas connection error:", err));
+  .connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB Atlas Connected successfully."))
+  .catch((err) => console.error("MongoDB Atlas connection error:", err));
 
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
-    console.log(`CampusBazaar server running on port ${PORT}`);
+  console.log(`CampusBazaar server running on port ${PORT}`);
 });
