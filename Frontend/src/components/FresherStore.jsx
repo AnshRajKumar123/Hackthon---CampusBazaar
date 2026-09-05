@@ -2,6 +2,24 @@ import React, { useState, useEffect, useRef } from "react";
 import { useCampus } from "../context/CampusContext";
 import "../styles/FresherStore.css";
 
+// Resolves relative backend paths against the active host IP for mobile & laptop compatibility
+export const getImageUrl = (imagePath) => {
+    if (!imagePath) return "https://placehold.co/400x300?text=No+Photo";
+
+    // If it's already a full external web link or base64 data URL
+    if (
+        imagePath.startsWith("http://") ||
+        imagePath.startsWith("https://") ||
+        imagePath.startsWith("data:")
+    ) {
+        // If it mistakenly has "localhost:5001" saved from before, replace with actual hostname
+        return imagePath.replace("localhost", window.location.hostname);
+    }
+
+    // Prepend current device host IP and backend port 5001
+    return `http://${window.location.hostname}:5001${imagePath.startsWith("/") ? "" : "/"}${imagePath}`;
+};
+
 const hostelFilters = [
     "All Hostels",
     "Block A",
@@ -214,11 +232,6 @@ const FresherStore = ({ onRentClick }) => {
                 ) : (
                     <div className="CatalogGrid">
                         {filteredItems.map((item) => {
-                            const imageSrc =
-                                item.images && item.images.length > 0
-                                    ? item.images[0]
-                                    : "https://placehold.co/400x300?text=No+Photo";
-
                             const isOwner =
                                 currentUser &&
                                 (currentUser.rollNo === item.userRollNo ||
@@ -235,12 +248,11 @@ const FresherStore = ({ onRentClick }) => {
                                 <div key={item.id || item._id} className="ProductCard">
                                     <div className="CardImageHolder">
                                         <img
-                                            src={imageSrc}
+                                            src={getImageUrl(item.images?.[0])}
                                             alt={item.itemTitle}
                                             loading="lazy"
                                             onError={(e) => {
-                                                e.target.src =
-                                                    "https://placehold.co/400x300?text=Image+Unavailable";
+                                                e.target.src = "https://placehold.co/400x300?text=No+Photo";
                                             }}
                                         />
                                         <span className={`TypeFlag ${item.type}`}>

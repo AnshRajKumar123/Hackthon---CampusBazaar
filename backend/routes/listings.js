@@ -14,11 +14,12 @@ router.get("/", async (req, res) => {
 });
 
 // POST /api/listings (Create product with up to 3 photos)
+// POST /api/listings
 router.post("/", upload.array("images", 3), async (req, res) => {
     try {
-        // Generate accessible URLs for uploaded files
+        // Save relative paths like "/uploads/filename.jpg" instead of hardcoded "localhost"
         const imageUrls = req.files
-            ? req.files.map((file) => `${req.protocol}://${req.get("host")}/uploads/${file.filename}`)
+            ? req.files.map((file) => `/uploads/${file.filename}`)
             : [];
 
         const newListing = new Listing({
