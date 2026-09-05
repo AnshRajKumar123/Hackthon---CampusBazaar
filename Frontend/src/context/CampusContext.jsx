@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 const CampusContext = createContext();
 
 // Automatically targets localhost on desktop and your LAN IP on mobile
-const API_BASE = `http://${window.location.hostname}:5000/api`;
+const API_BASE = `http://${window.location.hostname}:5001/api`;
 
 export const CampusProvider = ({ children }) => {
     const [listings, setListings] = useState([]);

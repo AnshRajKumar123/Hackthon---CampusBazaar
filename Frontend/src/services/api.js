@@ -1,5 +1,5 @@
 // Automatically handles switching between localhost and your local IP on mobile
-const API_BASE = `http://${window.location.hostname}:5000/api`;
+const API_BASE = `http://${window.location.hostname}:5001/api`;
 
 export const api = {
     // Auth
