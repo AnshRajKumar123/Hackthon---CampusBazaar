@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import WebLogo from "../assets/CampusImage/WebLogo.png";
 import { useCampus } from "../context/CampusContext";
+import { getImageUrl } from "./FresherStore";
 import "../styles/ProfileModal.css";
 
 const ProfileModal = ({ onClose }) => {
@@ -25,11 +26,15 @@ const ProfileModal = ({ onClose }) => {
 
     if (!currentUser) return null;
 
-    const myListings = listings.filter(
-        (item) =>
-            item.studentName?.toLowerCase() === currentUser.name?.toLowerCase() ||
-            item.studentPhone === currentUser.phone
-    );
+    // Robust matching for student items by rollNo, userId, or phone/name fallback
+    const myListings = listings.filter((item) => {
+        const matchesRoll = item.userRollNo && currentUser.rollNo && item.userRollNo === currentUser.rollNo;
+        const matchesId = item.userId && (item.userId === currentUser.id || item.userId === currentUser._id);
+        const matchesName = item.studentName && currentUser.name && item.studentName.toLowerCase() === currentUser.name.toLowerCase();
+        const matchesPhone = item.studentPhone && currentUser.phone && item.studentPhone === currentUser.phone;
+
+        return matchesRoll || matchesId || matchesName || matchesPhone;
+    });
 
     const handleSave = (e) => {
         e.preventDefault();
@@ -43,7 +48,7 @@ const ProfileModal = ({ onClose }) => {
         );
 
         if (confirmDelete) {
-            deleteUserProfile(currentUser.id);
+            deleteUserProfile(currentUser.id || currentUser._id);
             onClose();
         }
     };
@@ -258,8 +263,14 @@ const ProfileModal = ({ onClose }) => {
                             ) : (
                                 <div className="InventoryCardsGrid">
                                     {myListings.map((item) => (
-                                        <div key={item.id} className="InventoryMiniCard">
-                                            <img src={item.images?.[0]} alt={item.itemTitle} />
+                                        <div key={item.id || item._id} className="InventoryMiniCard">
+                                            <img
+                                                src={getImageUrl(item.images?.[0])}
+                                                alt={item.itemTitle}
+                                                onError={(e) => {
+                                                    e.target.src = "https://placehold.co/400x300?text=No+Photo";
+                                                }}
+                                            />
                                             <div className="MiniCardMeta">
                                                 <span className="MiniTypeBadge">
                                                     {item.type === "rent" ? "Rent" : "Buy"}
@@ -277,7 +288,7 @@ const ProfileModal = ({ onClose }) => {
                                                 title="Delete listing"
                                                 onClick={() => {
                                                     if (window.confirm(`Remove ${item.itemTitle}?`)) {
-                                                        deleteListing(item.id);
+                                                        deleteListing(item.id || item._id);
                                                     }
                                                 }}
                                             >
