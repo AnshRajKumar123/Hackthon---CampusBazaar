@@ -47,7 +47,7 @@ mongoose
     .catch((err) => console.error("MongoDB Atlas connection error:", err));
 
 // Render automatically provisions PORT; default to 5001 locally
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 10000;
 
 // Binding to 0.0.0.0 is required for Render's reverse proxy to route traffic
 app.listen(PORT, "0.0.0.0", () => {
