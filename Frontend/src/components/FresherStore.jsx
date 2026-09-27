@@ -96,7 +96,7 @@ const StoreCustomSelect = ({ icon, value, options, onChange }) => {
     );
 };
 
-const FresherStore = ({ onRentClick }) => {
+const FresherStore = ({ onRentClick, onChatClick }) => {
     const { listings, deleteListing, currentUser, isLoadingListings } = useCampus();
 
     const [filterMode, setFilterMode] = useState("all");
@@ -239,12 +239,6 @@ const FresherStore = ({ onRentClick }) => {
                                     currentUser.id === item.userId ||
                                     currentUser._id === item.userId);
 
-                            const rawPhone = (item.studentPhone || "").replace(/[^0-9]/g, "");
-                            const waNumber = rawPhone.length === 10 ? `91${rawPhone}` : rawPhone;
-                            const waMessage = encodeURIComponent(
-                                `Hi ${item.studentName}, I found your listing "${item.itemTitle}" on DBU CampusBazaar. Is it still available?`
-                            );
-
                             return (
                                 <div key={item.id || item._id} className="ProductCard">
                                     <div className="CardImageHolder">
@@ -318,15 +312,16 @@ const FresherStore = ({ onRentClick }) => {
                                             )}
                                         </div>
 
+                                        {/* Action Buttons: Live Chat + Details */}
                                         <div className="CardActionsRow">
-                                            <a
-                                                href={`https://wa.me/${waNumber}?text=${waMessage}`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
+                                            <button
+                                                type="button"
                                                 className="WhatsAppActionBtn"
+                                                onClick={() => onChatClick && onChatClick(item)}
                                             >
-                                                <i className="bx bxl-whatsapp"></i> WhatsApp
-                                            </a>
+                                                <i className="bx bx-message-rounded-dots"></i>
+                                                <span>Live Chat</span>
+                                            </button>
 
                                             <button
                                                 type="button"

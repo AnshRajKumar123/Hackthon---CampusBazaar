@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { getImageUrl } from "./FresherStore";
 import "../styles/RentDetailModal.css";
 
-const RentDetailModal = ({ item, onClose }) => {
+const RentDetailModal = ({ item, onClose, onOpenChat }) => {
     if (!item) return null;
 
     const [activeImageIndex, setActiveImageIndex] = useState(0);
@@ -10,16 +10,6 @@ const RentDetailModal = ({ item, onClose }) => {
     const images = item.images && item.images.length > 0
         ? item.images
         : ["https://placehold.co/600x400?text=No+Image"];
-
-    // Format phone with Indian country code prefix (91) for direct WhatsApp URL
-    const cleanDigits = (item.studentPhone || "").replace(/[^0-9]/g, "");
-    const formattedPhone = cleanDigits.length === 10 ? `91${cleanDigits}` : cleanDigits;
-
-    const whatsappUrl = `https://wa.me/${formattedPhone}?text=Hello%20${encodeURIComponent(
-        item.studentName || "Student"
-    )},%20I%20saw%20your%20listing%20"${encodeURIComponent(
-        item.itemTitle || "Item"
-    )}"%20on%20DBU%20CampusBazaar.%20Is%20it%20available%20for%20pickup?`;
 
     return (
         <div className="ModalOverlay" onClick={onClose}>
@@ -126,22 +116,19 @@ const RentDetailModal = ({ item, onClose }) => {
                             </div>
                         </div>
 
-                        {/* Action Buttons */}
+                        {/* Direct In-App Chat Action Button */}
                         <div className="ModalButtonCluster">
-                            <a
-                                href={whatsappUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="WhatsAppDirectBtn"
+                            <button
+                                type="button"
+                                className="LiveChatDirectBtn"
+                                onClick={() => {
+                                    onClose();
+                                    if (onOpenChat) onOpenChat(item);
+                                }}
                             >
-                                <i className="bx bxl-whatsapp"></i>
-                                <span>Message on WhatsApp</span>
-                            </a>
-
-                            <a href={`tel:${item.studentPhone}`} className="PhoneDirectBtn">
-                                <i className="bx bx-phone-call"></i>
-                                <span>Call Student</span>
-                            </a>
+                                <i className="bx bx-message-rounded-dots"></i>
+                                <span>Start Live Chat (Private & Verified)</span>
+                            </button>
                         </div>
                     </div>
                 </div>

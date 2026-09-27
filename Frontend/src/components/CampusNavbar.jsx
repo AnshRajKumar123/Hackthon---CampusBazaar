@@ -3,7 +3,7 @@ import WebLogo from "../assets/CampusImage/WebLogo.png";
 import { useCampus } from "../context/CampusContext";
 import "../styles/CampusNavbar.css";
 
-const CampusNavbar = ({ onOpenAuth, onOpenProfile }) => {
+const CampusNavbar = ({ onOpenAuth, onOpenProfile, onOpenChats }) => {
     const { currentUser } = useCampus();
     const [deferredPrompt, setDeferredPrompt] = useState(null);
     const [showInstallBtn, setShowInstallBtn] = useState(false);
@@ -80,6 +80,19 @@ const CampusNavbar = ({ onOpenAuth, onOpenProfile }) => {
                     >
                         <i className="bx bx-store-alt"></i>
                         <span>Campus Store</span>
+                    </button>
+
+                    {/* NEW: In-App Live Chats Navlink */}
+                    <button
+                        type="button"
+                        className={`DockLink ${activeSection === "chats" ? "active" : ""}`}
+                        onClick={() => {
+                            setActiveSection("chats");
+                            if (onOpenChats) onOpenChats();
+                        }}
+                    >
+                        <i className="bx bx-message-rounded-dots"></i>
+                        <span>Live Chats</span>
                     </button>
 
                     <button

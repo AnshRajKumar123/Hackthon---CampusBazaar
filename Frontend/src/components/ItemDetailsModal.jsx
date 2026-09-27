@@ -117,15 +117,18 @@ const ItemDetailsModal = ({ item, onClose }) => {
                         )}
 
                         <div className="ModalActions">
-                            <a
-                                href={whatsappUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                            <button
+                                type="button"
                                 className="WhatsAppChatBtn"
+                                style={{ border: "none", cursor: "pointer", width: "100%" }}
+                                onClick={() => {
+                                    onClose();
+                                    if (onOpenChat) onOpenChat(item);
+                                }}
                             >
-                                <i className="bx bxl-whatsapp"></i>
-                                <span>Chat on WhatsApp</span>
-                            </a>
+                                <i className="bx bx-message-rounded-dots"></i>
+                                <span>Chat with Student (Private)</span>
+                            </button>
                         </div>
                     </div>
                 </div>

@@ -370,3 +370,44 @@
         padding: 20px;
     }
 }
+
+/* Add/Replace the bottom button styling in RentDetailModal.css */
+.ModalButtonCluster {
+    display: flex;
+    gap: 10px;
+    margin-top: auto;
+    width: 100%;
+}
+
+.LiveChatDirectBtn {
+    flex: 1;
+    width: 100%;
+    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+    color: #ffffff;
+    padding: 13px 18px;
+    border-radius: 11px;
+    font-size: 14px;
+    font-weight: 800;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.LiveChatDirectBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(5, 150, 105, 0.45);
+}
+
+.LiveChatDirectBtn:active {
+    transform: scale(0.98);
+}
+
+.LiveChatDirectBtn i {
+    font-size: 20px;
+}
