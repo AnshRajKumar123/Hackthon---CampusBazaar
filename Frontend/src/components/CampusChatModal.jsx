@@ -2,130 +2,211 @@ import React, { useState, useEffect, useRef } from "react";
 import "../styles/CampusChatModal.css";
 
 const CampusChatModal = ({ item, currentUser, onClose }) => {
+    const [threads, setThreads] = useState([]);
+    const [activeThreadKey, setActiveThreadKey] = useState("");
     const [messages, setMessages] = useState([]);
     const [inputText, setInputText] = useState("");
     const messagesEndRef = useRef(null);
 
-    // Target seller / borrower details
-    const partnerName = item?.studentName || "Verified Student";
-    const partnerDepartment = item?.department || "DBU Student";
-    const partnerInitial = partnerName.charAt(0).toUpperCase();
-
-    // Unique chat conversation key between current student and listing owner
-    const chatStorageKey = `campus_chat_${item?.id || item?._id}_${currentUser?.rollNo}`;
-
-    useEffect(() => {
-        const saved = localStorage.getItem(chatStorageKey);
-        if (saved) {
-            setMessages(JSON.parse(saved));
-        } else {
-            // First automated opening inquiry
-            const initialMsg = {
-                id: "msg_1",
-                sender: "me",
-                text: `Hi ${partnerName}, I saw your listing for "${item?.itemTitle}" on CampusBazaar. Is it still available at ${item?.hostelBlock}?`,
-                time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-            };
-            setMessages([initialMsg]);
-            localStorage.setItem(chatStorageKey, JSON.stringify([initialMsg]));
+    // Load all conversations in localStorage associated with this user
+    const loadAllThreads = () => {
+        const found = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith("campus_chat_")) {
+                try {
+                    const rawData = JSON.parse(localStorage.getItem(key));
+                    if (Array.isArray(rawData)) {
+                        const metaKey = `meta_${key}`;
+                        const meta = JSON.parse(localStorage.getItem(metaKey) || "{}");
+                        found.push({
+                            key,
+                            meta,
+                            lastMessage: rawData[rawData.length - 1],
+                            messages: rawData,
+                        });
+                    }
+                } catch {
+                    // Ignore corrupted entries
+                }
+            }
         }
-    }, [chatStorageKey, partnerName, item]);
+        return found;
+    };
+
+    // Initialize or focus thread on mount
+    useEffect(() => {
+        const all = loadAllThreads();
+        setThreads(all);
+
+        if (item) {
+            const itemId = item.id || item._id;
+            const targetKey = `campus_chat_${itemId}_${currentUser?.rollNo}`;
+            setActiveThreadKey(targetKey);
+
+            // Store metadata for the sidebar listing
+            const metaKey = `meta_${targetKey}`;
+            const metaObj = {
+                partnerName: item.studentName || "Verified Student",
+                department: item.department || "DBU",
+                itemTitle: item.itemTitle,
+                itemId,
+            };
+            localStorage.setItem(metaKey, JSON.stringify(metaObj));
+
+            const existing = localStorage.getItem(targetKey);
+            setMessages(existing ? JSON.parse(existing) : []);
+        } else if (all.length > 0) {
+            setActiveThreadKey(all[0].key);
+            setMessages(all[0].messages || []);
+        }
+    }, [item, currentUser]);
+
+    // Update active conversation when clicking sidebar items
+    const handleSelectThread = (thread) => {
+        setActiveThreadKey(thread.key);
+        setMessages(thread.messages || []);
+    };
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
+    // Send a real message (no fake bot/auto-reply)
     const handleSendMessage = (e) => {
         e.preventDefault();
-        if (!inputText.trim()) return;
+        if (!inputText.trim() || !activeThreadKey) return;
 
         const newMsg = {
             id: `msg_${Date.now()}`,
             sender: "me",
+            senderRoll: currentUser?.rollNo,
             text: inputText.trim(),
             time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         };
 
         const updated = [...messages, newMsg];
         setMessages(updated);
-        localStorage.setItem(chatStorageKey, JSON.stringify(updated));
+        localStorage.setItem(activeThreadKey, JSON.stringify(updated));
         setInputText("");
 
-        // Simulated seller reply
-        setTimeout(() => {
-            const replyMsg = {
-                id: `reply_${Date.now()}`,
-                sender: "partner",
-                text: `Hi ${currentUser?.name?.split(" ")[0] || "there"}! Yes, it's available. We can meet near ${item?.hostelBlock || "the hostel"} to check it out.`,
-                time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-            };
-            setMessages((prev) => {
-                const withReply = [...prev, replyMsg];
-                localStorage.setItem(chatStorageKey, JSON.stringify(withReply));
-                return withReply;
-            });
-        }, 1200);
+        // Refresh thread sidebar list
+        setThreads(loadAllThreads());
     };
+
+    // Determine current partner details safely
+    const currentMeta = JSON.parse(localStorage.getItem(`meta_${activeThreadKey}`) || "{}");
+    const partnerName = currentMeta.partnerName || item?.studentName || "Verified Student";
+    const partnerDepartment = currentMeta.department || item?.department || "DBU Student";
+    const partnerInitial = partnerName.charAt(0).toUpperCase();
 
     return (
         <div className="ChatModalBackdrop" onClick={onClose}>
             <div className="ChatModalCard" onClick={(e) => e.stopPropagation()}>
-                {/* Header */}
-                <div className="ChatHeader">
-                    <div className="ChatHeaderLeft">
-                        <div className="ChatAvatar">{partnerInitial}</div>
-                        <div className="ChatHeaderMeta">
-                            <span className="ChatPartnerName">{partnerName}</span>
-                            <span className="ChatPartnerBadge">
-                                <i className="bx bxs-check-shield"></i>
-                                {partnerDepartment} · DBU Verified
-                            </span>
-                        </div>
+                {/* 1. LEFT SIDEBAR: INBOX THREADS */}
+                <aside className="ChatSidebar">
+                    <div className="ChatSidebarHeader">
+                        <h3>
+                            <i className="bx bx-conversation"></i>
+                            <span>Student Chats</span>
+                        </h3>
                     </div>
-                    <button type="button" className="ChatHeaderCloseBtn" onClick={onClose}>
-                        <i className="bx bx-x"></i>
-                    </button>
-                </div>
 
-                {/* Privacy Badge: Shields user phone numbers */}
-                <div className="PrivacyNoticeBanner">
-                    <i className="bx bx-lock-alt"></i>
-                    <span>Private & Protected: Personal phone numbers are masked on both sides.</span>
-                </div>
+                    <div className="ChatThreadList">
+                        {threads.length === 0 && !item ? (
+                            <div className="SidebarEmptyState">
+                                <i className="bx bx-message-square-dots"></i>
+                                <p>No active chats yet</p>
+                            </div>
+                        ) : (
+                            threads.map((t) => (
+                                <div
+                                    key={t.key}
+                                    className={`ChatThreadItem ${activeThreadKey === t.key ? "active" : ""}`}
+                                    onClick={() => handleSelectThread(t)}
+                                >
+                                    <div className="ThreadAvatar">
+                                        {(t.meta.partnerName || "S").charAt(0).toUpperCase()}
+                                    </div>
+                                    <div className="ThreadMeta">
+                                        <div className="ThreadTopRow">
+                                            <span className="ThreadName">{t.meta.partnerName || "Student"}</span>
+                                            <span className="ThreadTime">{t.lastMessage?.time || ""}</span>
+                                        </div>
+                                        <div className="ThreadItemTitle">{t.meta.itemTitle || "Listing"}</div>
+                                        <p className="ThreadLastMsg">
+                                            {t.lastMessage ? t.lastMessage.text : "Tap to open chat..."}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </aside>
 
-                {/* Messages stream */}
-                <div className="ChatBodyStream">
-                    <div className="ChatDateStamp">Today</div>
-
-                    {messages.map((m) => (
-                        <div
-                            key={m.id}
-                            className={`ChatMessageBubble ${m.sender === "me" ? "sent" : "received"}`}
-                        >
-                            <span>{m.text}</span>
-                            <div className="MessageFooter">
-                                <span>{m.time}</span>
-                                {m.sender === "me" && <i className="bx bx-check-double"></i>}
+                {/* 2. RIGHT MAIN PANE: CHAT MESSENGER */}
+                <main className="ChatMainPane">
+                    <header className="ChatHeader">
+                        <div className="ChatHeaderLeft">
+                            <div className="ThreadAvatar">{partnerInitial}</div>
+                            <div>
+                                <div className="ChatPartnerName">{partnerName}</div>
+                                <div className="ChatPartnerBadge">
+                                    <i className="bx bxs-check-shield"></i>
+                                    {partnerDepartment} · DBU Verified
+                                </div>
                             </div>
                         </div>
-                    ))}
-                    <div ref={messagesEndRef} />
-                </div>
+                        <button type="button" className="ChatHeaderCloseBtn" onClick={onClose}>
+                            <i className="bx bx-x"></i>
+                        </button>
+                    </header>
 
-                {/* Input Dock */}
-                <form className="ChatInputDock" onSubmit={handleSendMessage}>
-                    <input
-                        type="text"
-                        placeholder="Type a message..."
-                        className="ChatInputField"
-                        value={inputText}
-                        onChange={(e) => setInputText(e.target.value)}
-                        autoFocus
-                    />
-                    <button type="submit" className="ChatSendBtn">
-                        <i className="bx bxs-send"></i>
-                    </button>
-                </form>
+                    {/* Masked numbers privacy reminder */}
+                    <div className="PrivacyNoticeBanner">
+                        <i className="bx bx-shield-quarter"></i>
+                        <span>Privacy Protected: Phone numbers are kept hidden on both sides.</span>
+                    </div>
+
+                    {/* Message stream */}
+                    <div className="ChatBodyStream">
+                        {messages.length === 0 ? (
+                            <div className="ChatNoMessagesState">
+                                <i className="bx bx-chat" style={{ fontSize: "28px", marginBottom: "6px" }}></i>
+                                <span>No messages yet. Send an inquiry below!</span>
+                            </div>
+                        ) : (
+                            messages.map((m) => (
+                                <div
+                                    key={m.id}
+                                    className={`ChatMessageBubble ${m.sender === "me" ? "sent" : "received"}`}
+                                >
+                                    <span>{m.text}</span>
+                                    <div className="MessageFooter">
+                                        <span>{m.time}</span>
+                                        {m.sender === "me" && <i className="bx bx-check-double"></i>}
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                        <div ref={messagesEndRef} />
+                    </div>
+
+                    {/* Message Input Dock */}
+                    <form className="ChatInputDock" onSubmit={handleSendMessage}>
+                        <input
+                            type="text"
+                            placeholder="Type a message to the student..."
+                            className="ChatInputField"
+                            value={inputText}
+                            onChange={(e) => setInputText(e.target.value)}
+                            autoFocus
+                        />
+                        <button type="submit" className="ChatSendBtn" aria-label="Send">
+                            <i className="bx bxs-send"></i>
+                        </button>
+                    </form>
+                </main>
             </div>
         </div>
     );

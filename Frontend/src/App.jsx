@@ -16,22 +16,39 @@ function App() {
     const [selectedItemForModal, setSelectedItemForModal] = useState(null);
     const [showProfileModal, setShowProfileModal] = useState(false);
     const [activeChatItem, setActiveChatItem] = useState(null);
+    const [isChatOpen, setIsChatOpen] = useState(false);
 
-    // GATEKEEPER: If the student is not logged in, force the login/register screen
+    // GATEKEEPER: Require authentication
     if (!currentUser) {
         return <AuthModal isFullScreen={true} />;
     }
+
+    // Handles Live Chat click with self-ownership prevention
+    const handleInitiateChat = (item) => {
+        const isOwner =
+            currentUser.rollNo === item.userRollNo ||
+            currentUser.id === item.userId ||
+            currentUser._id === item.userId ||
+            currentUser.name === item.studentName;
+
+        if (isOwner) {
+            alert("This is your listing! Buyers will message you here. Opening your inbox...");
+            setActiveChatItem(null); // Opens general sidebar inbox
+            setIsChatOpen(true);
+            return;
+        }
+
+        setActiveChatItem(item);
+        setIsChatOpen(true);
+    };
 
     return (
         <div className="CampusAppRoot">
             <CampusNavbar
                 onOpenProfile={() => setShowProfileModal(true)}
                 onOpenChats={() => {
-                    if (listings && listings.length > 0) {
-                        setActiveChatItem(listings[0]);
-                    } else {
-                        alert("No active student listings to chat with right now.");
-                    }
+                    setActiveChatItem(null);
+                    setIsChatOpen(true);
                 }}
             />
 
@@ -40,7 +57,7 @@ function App() {
                 <StudentListingForm />
                 <FresherStore
                     onRentClick={(item) => setSelectedItemForModal(item)}
-                    onChatClick={(item) => setActiveChatItem(item)}
+                    onChatClick={handleInitiateChat}
                 />
                 <CampusAboutAndSafety />
             </main>
@@ -51,7 +68,7 @@ function App() {
                 <RentDetailModal
                     item={selectedItemForModal}
                     onClose={() => setSelectedItemForModal(null)}
-                    onOpenChat={(item) => setActiveChatItem(item)}
+                    onOpenChat={handleInitiateChat}
                 />
             )}
 
@@ -60,12 +77,15 @@ function App() {
                 <ProfileModal onClose={() => setShowProfileModal(false)} />
             )}
 
-            {/* Privacy-Protected Live Chat Modal */}
-            {activeChatItem && (
+            {/* Dual-Column WhatsApp-Style Live Chat Modal */}
+            {isChatOpen && (
                 <CampusChatModal
                     item={activeChatItem}
                     currentUser={currentUser}
-                    onClose={() => setActiveChatItem(null)}
+                    onClose={() => {
+                        setIsChatOpen(false);
+                        setActiveChatItem(null);
+                    }}
                 />
             )}
         </div>

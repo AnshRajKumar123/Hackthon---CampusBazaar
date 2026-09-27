@@ -1,4 +1,4 @@
-/* WhatsApp styled Live Chat Modal */
+/* WhatsApp Web dual-column modal layout */
 .ChatModalBackdrop {
     position: fixed;
     inset: 0;
@@ -9,25 +9,170 @@
     justify-content: center;
     z-index: 9999;
     padding: 16px;
-    animation: fadeInModal 0.25s ease-out;
+    animation: fadeInModal 0.2s ease-out;
 }
 
 .ChatModalCard {
     width: 100%;
-    max-width: 480px;
-    height: 640px;
+    max-width: 900px;
+    height: 650px;
     max-height: 90vh;
     background: #ffffff;
-    border-radius: 20px;
+    border-radius: 18px;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     box-shadow: var(--shadow-elevated, 0 20px 40px -12px rgba(0, 43, 84, 0.25));
     overflow: hidden;
     position: relative;
     border: 1px solid var(--border-subtle, #e2e8f0);
 }
 
-/* WhatsApp Header with DBU theme */
+/* =======================================
+   LEFT SIDEBAR: CONVERSATION LIST
+   ======================================= */
+.ChatSidebar {
+    width: 320px;
+    border-right: 1px solid var(--border-subtle, #e2e8f0);
+    display: flex;
+    flex-direction: column;
+    background: #f8fafc;
+}
+
+.ChatSidebarHeader {
+    background: var(--dbu-navy, #002b54);
+    color: #ffffff;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.ChatSidebarHeader h3 {
+    font-size: 15px;
+    font-weight: 800;
+    color: #ffffff;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ChatThreadList {
+    flex: 1;
+    overflow-y: auto;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.ChatThreadItem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border-subtle, #e2e8f0);
+    cursor: pointer;
+    background: #ffffff;
+    transition: background 0.15s ease;
+}
+
+.ChatThreadItem:hover {
+    background: #f1f5f9;
+}
+
+.ChatThreadItem.active {
+    background: #e6f0fa;
+    border-left: 4px solid var(--dbu-blue-accent, #00569e);
+}
+
+.ThreadAvatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--dbu-blue-accent, #00569e), var(--dbu-gold, #f5a800));
+    color: #ffffff;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.ThreadMeta {
+    flex: 1;
+    overflow: hidden;
+}
+
+.ThreadTopRow {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2px;
+}
+
+.ThreadName {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--text-headline, #0a192f);
+}
+
+.ThreadTime {
+    font-size: 11px;
+    color: var(--text-muted, #64748b);
+}
+
+.ThreadItemTitle {
+    font-size: 11.5px;
+    color: var(--dbu-blue-accent, #00569e);
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ThreadLastMsg {
+    font-size: 12px;
+    color: var(--text-muted, #64748b);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0;
+}
+
+.SidebarEmptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--text-muted, #64748b);
+    height: 100%;
+}
+
+.SidebarEmptyState i {
+    font-size: 44px;
+    color: #cbd5e1;
+    margin-bottom: 8px;
+}
+
+.SidebarEmptyState p {
+    font-size: 13px;
+    margin: 0;
+}
+
+/* =======================================
+   RIGHT MAIN PANE: CHAT WINDOW
+   ======================================= */
+.ChatMainPane {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #efeae2;
+    background-image: radial-gradient(#d5cdc4 1px, transparent 1px);
+    background-size: 16px 16px;
+    position: relative;
+}
+
 .ChatHeader {
     background: var(--dbu-navy, #002b54);
     color: #ffffff;
@@ -36,6 +181,7 @@
     align-items: center;
     justify-content: space-between;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    z-index: 10;
 }
 
 .ChatHeaderLeft {
@@ -44,30 +190,9 @@
     gap: 12px;
 }
 
-.ChatAvatar {
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    background: linear-gradient(135deg,
-            var(--dbu-blue-accent, #00569e),
-            var(--dbu-gold, #f5a800));
-    color: #ffffff;
-    font-weight: 700;
-    font-size: 17px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 2px solid rgba(255, 255, 255, 0.4);
-}
-
-.ChatHeaderMeta {
-    display: flex;
-    flex-direction: column;
-}
-
 .ChatPartnerName {
-    font-family: "Plus Jakarta Sans", sans-serif;
-    font-size: 15px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 14.5px;
     font-weight: 700;
     color: #ffffff;
 }
@@ -98,14 +223,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.2s;
+    transition: background 0.15s ease;
 }
 
 .ChatHeaderCloseBtn:hover {
     background: rgba(255, 255, 255, 0.15);
 }
 
-/* Privacy Assurance Banner (Phone numbers shielded) */
 .PrivacyNoticeBanner {
     background: #eef6ff;
     border-bottom: 1px solid #d0e4ff;
@@ -123,35 +247,34 @@
     color: var(--dbu-blue-accent, #00569e);
 }
 
-/* Chat Wallpaper & Feed */
+/* Chat Feed Stream */
 .ChatBodyStream {
     flex: 1;
     overflow-y: auto;
     padding: 16px;
-    background-color: #efeae2;
-    background-image: radial-gradient(#d5cdc4 1px, transparent 1px);
-    background-size: 16px 16px;
     display: flex;
     flex-direction: column;
     gap: 10px;
 }
 
-.ChatDateStamp {
-    align-self: center;
-    background: rgba(255, 255, 255, 0.85);
-    padding: 4px 10px;
-    border-radius: 8px;
-    font-size: 11px;
-    color: #64748b;
-    font-weight: 600;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+.ChatNoMessagesState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: auto;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 16px 24px;
+    border-radius: 12px;
+    color: var(--text-muted, #64748b);
+    font-size: 13px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
-/* Message Bubbles */
 .ChatMessageBubble {
-    max-width: 78%;
+    max-width: 75%;
     padding: 8px 12px;
-    border-radius: 12px;
+    border-radius: 10px;
     font-size: 13.5px;
     line-height: 1.45;
     position: relative;
@@ -164,7 +287,6 @@
 .ChatMessageBubble.sent {
     align-self: flex-end;
     background: #d9fdd3;
-    /* Classic WhatsApp green bubble */
     border-top-right-radius: 2px;
     color: #111b21;
 }
@@ -188,11 +310,10 @@
 
 .MessageFooter .bx-check-double {
     color: #53bdeb;
-    /* WhatsApp blue ticks */
     font-size: 14px;
 }
 
-/* Input Dock */
+/* Input Form Dock */
 .ChatInputDock {
     background: #f0f2f5;
     padding: 10px 14px;
@@ -205,12 +326,12 @@
 .ChatInputField {
     flex: 1;
     background: #ffffff;
-    border: 1px solid var(--border-strong, #cbd5e1);
+    border: 1.5px solid var(--border-strong, #cbd5e1);
     border-radius: 24px;
     padding: 10px 16px;
-    font-size: 14px;
+    font-size: 13.5px;
     outline: none;
-    font-family: "Inter", sans-serif;
+    font-family: 'Inter', sans-serif;
     color: var(--text-headline, #0a192f);
 }
 
@@ -219,8 +340,8 @@
 }
 
 .ChatSendBtn {
-    width: 42px;
-    height: 42px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     background: var(--tag-green, #059669);
     color: #ffffff;
@@ -228,11 +349,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
+    font-size: 19px;
     cursor: pointer;
-    transition:
-        transform 0.15s ease,
-        background 0.2s;
+    transition: transform 0.15s ease, background 0.2s;
 }
 
 .ChatSendBtn:hover {
@@ -243,10 +362,16 @@
     transform: scale(0.92);
 }
 
+@media (max-width: 720px) {
+    .ChatSidebar {
+        display: none;
+    }
+}
+
 @keyframes fadeInModal {
     from {
         opacity: 0;
-        transform: scale(0.97);
+        transform: scale(0.98);
     }
 
     to {
