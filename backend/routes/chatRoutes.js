@@ -3,7 +3,7 @@ const { ChatConversation } = require("../models/Chat");
 
 const router = express.Router();
 
-// 1. Fetch all conversations for the student
+// 1. Fetch all conversations for the student (either as buyer or seller)
 router.get("/conversations", async (req, res) => {
     try {
         const { rollNo } = req.query;
@@ -12,12 +12,18 @@ router.get("/conversations", async (req, res) => {
         }
 
         const cleanRoll = String(rollNo).trim();
+
         const threads = await ChatConversation.find({
-            participants: cleanRoll
+            $or: [
+                { participants: cleanRoll },
+                { sellerRoll: cleanRoll },
+                { buyerRoll: cleanRoll }
+            ]
         }).sort({ updatedAt: -1 });
 
         res.json({ success: true, threads });
     } catch (err) {
+        console.error("Fetch threads error:", err);
         res.status(500).json({ success: false, message: err.message });
     }
 });
@@ -27,17 +33,42 @@ router.post("/conversations/open", async (req, res) => {
     try {
         const { itemId, itemTitle, sellerRoll, sellerName, buyerRoll, buyerName } = req.body;
 
-        const cleanBuyer = String(buyerRoll).trim();
-        const cleanSeller = String(sellerRoll).trim();
+        const cleanBuyer = String(buyerRoll || "").trim();
+        const cleanSeller = String(sellerRoll || "").trim();
+        const cleanItemId = String(itemId || "").trim();
 
-        let conversation = await ChatConversation.findOne({
-            itemId: String(itemId),
-            participants: { $all: [cleanBuyer, cleanSeller] }
-        });
+        if (!cleanItemId) {
+            return res.status(400).json({ success: false, message: "itemId is required" });
+        }
+
+        let conversation = null;
+
+        if (cleanBuyer && cleanSeller && cleanBuyer !== cleanSeller) {
+            conversation = await ChatConversation.findOne({
+                itemId: cleanItemId,
+                $or: [
+                    { participants: { $all: [cleanBuyer, cleanSeller] } },
+                    { sellerRoll: cleanSeller, buyerRoll: cleanBuyer },
+                    { sellerRoll: cleanBuyer, buyerRoll: cleanSeller }
+                ]
+            });
+        } else {
+            conversation = await ChatConversation.findOne({
+                itemId: cleanItemId
+            }).sort({ updatedAt: -1 });
+        }
 
         if (!conversation) {
+            if (!cleanBuyer || !cleanSeller || cleanBuyer === cleanSeller) {
+                const fallback = await ChatConversation.findOne({
+                    $or: [{ sellerRoll: cleanBuyer }, { buyerRoll: cleanBuyer }]
+                }).sort({ updatedAt: -1 });
+
+                return res.json({ success: true, conversation: fallback || null });
+            }
+
             conversation = await ChatConversation.create({
-                itemId: String(itemId),
+                itemId: cleanItemId,
                 itemTitle: itemTitle || "Campus Gear",
                 sellerRoll: cleanSeller,
                 sellerName: sellerName || "Seller",
@@ -50,6 +81,7 @@ router.post("/conversations/open", async (req, res) => {
 
         res.json({ success: true, conversation });
     } catch (err) {
+        console.error("Open conversation error:", err);
         res.status(500).json({ success: false, message: err.message });
     }
 });
@@ -59,6 +91,10 @@ router.put("/conversations/:id/seen", async (req, res) => {
     try {
         const { id } = req.params;
         const { readerRoll } = req.body;
+
+        if (!id || id === "undefined") {
+            return res.status(400).json({ success: false, message: "Invalid conversation ID" });
+        }
 
         const conversation = await ChatConversation.findById(id);
         if (!conversation) {
@@ -79,15 +115,20 @@ router.put("/conversations/:id/seen", async (req, res) => {
 
         res.json({ success: true, messages: conversation.messages });
     } catch (err) {
+        console.error("Seen error:", err);
         res.status(500).json({ success: false, message: err.message });
     }
 });
 
-// 4. Send message
+// 4. Send a new message
 router.post("/conversations/:id/messages", async (req, res) => {
     try {
         const { id } = req.params;
         const { senderRoll, senderName, text } = req.body;
+
+        if (!id || id === "undefined") {
+            return res.status(400).json({ success: false, message: "Invalid conversation ID" });
+        }
 
         if (!text || !text.trim()) {
             return res.status(400).json({ success: false, message: "Message cannot be empty" });
@@ -110,10 +151,17 @@ router.post("/conversations/:id/messages", async (req, res) => {
         };
 
         conversation.messages.push(newMsg);
+
+        const cleanSender = String(senderRoll).trim();
+        if (!conversation.participants.includes(cleanSender)) {
+            conversation.participants.push(cleanSender);
+        }
+
         await conversation.save();
 
         res.json({ success: true, message: newMsg, conversation });
     } catch (err) {
+        console.error("Send message error:", err);
         res.status(500).json({ success: false, message: err.message });
     }
 });

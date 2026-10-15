@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import "../styles/CampusChatModal.css";
 
-// Connect directly to Node.js backend port 5001
 const API_BASE = "http://localhost:5001/api/chat";
 
 const CampusChatModal = ({ item, currentUser, onClose }) => {
@@ -20,25 +19,26 @@ const CampusChatModal = ({ item, currentUser, onClose }) => {
         if (!conversation) return { name: "DBU Student", dept: "Verified Student" };
 
         const isMeSeller = String(conversation.sellerRoll).trim() === myRoll;
+        const otherName = isMeSeller ? conversation.buyerName : conversation.sellerName;
+        const otherRole = isMeSeller ? "Student Buyer" : "Verified Seller";
+        const otherRoll = isMeSeller ? conversation.buyerRoll : conversation.sellerRoll;
+
         return {
-            name: isMeSeller ? conversation.buyerName : conversation.sellerName,
-            dept: isMeSeller ? "Inquiring Buyer" : "Verified Seller",
-            roll: isMeSeller ? conversation.buyerRoll : conversation.sellerRoll
+            name: otherName || (isMeSeller ? "Student Buyer" : "Listing Owner"),
+            dept: otherRole,
+            roll: otherRoll
         };
     };
 
-    // 1. Load threads for this user from MongoDB
+    // 1. Fetch all conversations for current user from MongoDB
     const fetchThreads = async () => {
         if (!myRoll) return [];
         try {
             const res = await fetch(`${API_BASE}/conversations?rollNo=${myRoll}`);
-            if (!res.ok) {
-                console.warn("Server responded with status:", res.status);
-                return [];
-            }
+            if (!res.ok) return [];
             const data = await res.json();
-            if (data.success) {
-                setThreads(data.threads || []);
+            if (data.success && Array.isArray(data.threads)) {
+                setThreads(data.threads);
                 return data.threads;
             }
         } catch (err) {
@@ -47,7 +47,7 @@ const CampusChatModal = ({ item, currentUser, onClose }) => {
         return [];
     };
 
-    // 2. Mark unseen messages as read in MongoDB
+    // 2. Mark unseen messages as read
     const markAsSeen = async (conversationId) => {
         if (!conversationId || !myRoll) return;
         try {
@@ -63,75 +63,107 @@ const CampusChatModal = ({ item, currentUser, onClose }) => {
 
     // 3. Initialize or open active conversation
     useEffect(() => {
+        let isMounted = true;
+
         const initChat = async () => {
             setLoading(true);
             const userThreads = await fetchThreads();
 
             if (item) {
-                const itemId = item.id || item._id;
-                const sellerRoll = item.rollNo || item.studentRoll || item.sellerRoll;
-                const sellerName = item.studentName || item.sellerName || "Listing Owner";
+                const itemId = String(item.id || item._id || "").trim();
+
+                // Check all possible field variations for owner's roll number
+                const rawSellerRoll = String(
+                    item.studentRollNo ||
+                    item.rollNo ||
+                    item.studentRoll ||
+                    item.sellerRoll ||
+                    item.userRoll ||
+                    ""
+                ).trim();
+
+                const isItemOwner = rawSellerRoll && rawSellerRoll === myRoll;
+
+                const payload = {
+                    itemId,
+                    itemTitle: item.itemTitle || item.title || "Campus Gear",
+                    sellerRoll: rawSellerRoll || (isItemOwner ? myRoll : "seller"),
+                    sellerName: item.studentName || item.sellerName || (isItemOwner ? myName : "Listing Owner"),
+                    buyerRoll: isItemOwner ? "" : myRoll,
+                    buyerName: isItemOwner ? "" : myName
+                };
 
                 try {
                     const res = await fetch(`${API_BASE}/conversations/open`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            itemId: String(itemId),
-                            itemTitle: item.itemTitle || item.title || "Campus Gear",
-                            sellerRoll: String(sellerRoll),
-                            sellerName: sellerName,
-                            buyerRoll: myRoll,
-                            buyerName: myName
-                        })
+                        body: JSON.stringify(payload)
                     });
 
                     if (res.ok) {
                         const data = await res.json();
-                        if (data.success && data.conversation) {
+                        if (isMounted && data.success && data.conversation) {
                             setActiveConversation(data.conversation);
                             setMessages(data.conversation.messages || []);
-                            await markAsSeen(data.conversation._id);
+                            markAsSeen(data.conversation._id);
+                            fetchThreads();
+                        } else if (isMounted && userThreads.length > 0) {
+                            setActiveConversation(userThreads[0]);
+                            setMessages(userThreads[0].messages || []);
                         }
-                    } else {
-                        console.error("Failed opening conversation, status:", res.status);
                     }
                 } catch (err) {
                     console.error("Open conversation error:", err);
                 }
             } else if (userThreads && userThreads.length > 0) {
-                setActiveConversation(userThreads[0]);
-                setMessages(userThreads[0].messages || []);
-                await markAsSeen(userThreads[0]._id);
+                if (isMounted) {
+                    setActiveConversation(userThreads[0]);
+                    setMessages(userThreads[0].messages || []);
+                    markAsSeen(userThreads[0]._id);
+                }
             }
 
-            setLoading(false);
+            if (isMounted) setLoading(false);
         };
 
         initChat();
+
+        return () => {
+            isMounted = false;
+        };
     }, [item, myRoll]);
 
-    // 4. Polling for live incoming messages from MongoDB (every 2.5 seconds)
+    // 4. Polling for live incoming messages from MongoDB (every 2 seconds)
     useEffect(() => {
-        if (!activeConversation?._id) return;
+        if (!myRoll) return;
 
         const interval = setInterval(async () => {
             try {
                 const res = await fetch(`${API_BASE}/conversations?rollNo=${myRoll}`);
                 if (res.ok) {
                     const data = await res.json();
-                    if (data.success && data.threads) {
+                    if (data.success && Array.isArray(data.threads)) {
                         setThreads(data.threads);
-                        const currentUpdated = data.threads.find((t) => t._id === activeConversation._id);
-                        if (currentUpdated) {
-                            setMessages(currentUpdated.messages || []);
+
+                        // If viewing a conversation, update messages live
+                        if (activeConversation?._id) {
+                            const updatedActive = data.threads.find(
+                                (t) => String(t._id) === String(activeConversation._id)
+                            );
+                            if (updatedActive) {
+                                setMessages(updatedActive.messages || []);
+                            }
+                        } else if (data.threads.length > 0) {
+                            // If none was focused, select the latest one
+                            setActiveConversation(data.threads[0]);
+                            setMessages(data.threads[0].messages || []);
                         }
                     }
                 }
             } catch {
                 // Ignore transient network errors
             }
-        }, 2500);
+        }, 2000);
 
         return () => clearInterval(interval);
     }, [activeConversation?._id, myRoll]);
@@ -151,13 +183,46 @@ const CampusChatModal = ({ item, currentUser, onClose }) => {
     // 5. Send message directly to MongoDB
     const handleSendMessage = async (e) => {
         e.preventDefault();
-        if (!inputText.trim() || !activeConversation?._id) return;
+        if (!inputText.trim()) return;
+
+        let targetId = activeConversation?._id;
+
+        // If no conversation in state yet, create one before sending
+        if (!targetId && item) {
+            const rawSeller = String(
+                item.studentRollNo ||
+                item.rollNo ||
+                item.studentRoll ||
+                item.sellerRoll ||
+                ""
+            ).trim();
+
+            const res = await fetch(`${API_BASE}/conversations/open`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    itemId: String(item.id || item._id),
+                    itemTitle: item.itemTitle || item.title || "Campus Gear",
+                    sellerRoll: rawSeller || "seller",
+                    sellerName: item.studentName || item.sellerName || "Listing Owner",
+                    buyerRoll: myRoll,
+                    buyerName: myName
+                })
+            });
+            const data = await res.json();
+            if (data.success && data.conversation) {
+                targetId = data.conversation._id;
+                setActiveConversation(data.conversation);
+            }
+        }
+
+        if (!targetId) return;
 
         const textToSend = inputText.trim();
         setInputText("");
 
         try {
-            const res = await fetch(`${API_BASE}/conversations/${activeConversation._id}/messages`, {
+            const res = await fetch(`${API_BASE}/conversations/${targetId}/messages`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -170,6 +235,7 @@ const CampusChatModal = ({ item, currentUser, onClose }) => {
             if (res.ok) {
                 const data = await res.json();
                 if (data.success && data.conversation) {
+                    setActiveConversation(data.conversation);
                     setMessages(data.conversation.messages || []);
                     fetchThreads();
                 }
@@ -185,7 +251,7 @@ const CampusChatModal = ({ item, currentUser, onClose }) => {
     return (
         <div className="ChatModalBackdrop" onClick={onClose}>
             <div className="ChatModalCard" onClick={(e) => e.stopPropagation()}>
-                {/* 1. LEFT SIDEBAR: CONVERSATION LIST */}
+                {/* 1. LEFT SIDEBAR: INBOX THREADS */}
                 <aside className="ChatSidebar">
                     <div className="ChatSidebarHeader">
                         <h3>
@@ -235,7 +301,7 @@ const CampusChatModal = ({ item, currentUser, onClose }) => {
                     </div>
                 </aside>
 
-                {/* 2. RIGHT MAIN PANE: CHAT STREAM */}
+                {/* 2. RIGHT MAIN PANE: CHAT MESSENGER */}
                 <main className="ChatMainPane">
                     <header className="ChatHeader">
                         <div className="ChatHeaderLeft">
