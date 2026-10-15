@@ -3,23 +3,37 @@ const { ChatConversation } = require("../models/Chat");
 
 const router = express.Router();
 
-// 1. Fetch all conversations for the student (either as buyer or seller)
+// 1. Fetch all conversations for the student (matches by roll number OR student name)
 router.get("/conversations", async (req, res) => {
     try {
-        const { rollNo } = req.query;
-        if (!rollNo) {
-            return res.status(400).json({ success: false, message: "rollNo is required" });
+        const { rollNo, name } = req.query;
+        const cleanRoll = String(rollNo || "").trim();
+        const cleanName = String(name || "").trim();
+
+        if (!cleanRoll && !cleanName) {
+            return res.status(400).json({ success: false, message: "rollNo or name is required" });
         }
 
-        const cleanRoll = String(rollNo).trim();
+        const conditions = [];
 
-        const threads = await ChatConversation.find({
-            $or: [
+        if (cleanRoll) {
+            conditions.push(
                 { participants: cleanRoll },
                 { sellerRoll: cleanRoll },
                 { buyerRoll: cleanRoll }
-            ]
-        }).sort({ updatedAt: -1 });
+            );
+        }
+
+        if (cleanName && cleanName !== "Me" && cleanName !== "Student") {
+            const nameRegex = new RegExp(`^${cleanName}$`, "i");
+            conditions.push(
+                { participants: cleanName },
+                { sellerName: { $regex: nameRegex } },
+                { buyerName: { $regex: nameRegex } }
+            );
+        }
+
+        const threads = await ChatConversation.find({ $or: conditions }).sort({ updatedAt: -1 });
 
         res.json({ success: true, threads });
     } catch (err) {
@@ -33,14 +47,17 @@ router.post("/conversations/open", async (req, res) => {
     try {
         const { itemId, itemTitle, sellerRoll, sellerName, buyerRoll, buyerName } = req.body;
 
+        const cleanItemId = String(itemId || "").trim();
         const cleanBuyer = String(buyerRoll || "").trim();
         const cleanSeller = String(sellerRoll || "").trim();
-        const cleanItemId = String(itemId || "").trim();
+        const cleanBuyerName = String(buyerName || "").trim();
+        const cleanSellerName = String(sellerName || "").trim();
 
         if (!cleanItemId) {
             return res.status(400).json({ success: false, message: "itemId is required" });
         }
 
+        // Look for existing conversation for this item
         let conversation = null;
 
         if (cleanBuyer && cleanSeller && cleanBuyer !== cleanSeller) {
@@ -52,31 +69,59 @@ router.post("/conversations/open", async (req, res) => {
                     { sellerRoll: cleanBuyer, buyerRoll: cleanSeller }
                 ]
             });
-        } else {
-            conversation = await ChatConversation.findOne({
-                itemId: cleanItemId
-            }).sort({ updatedAt: -1 });
         }
 
-        if (!conversation) {
-            if (!cleanBuyer || !cleanSeller || cleanBuyer === cleanSeller) {
-                const fallback = await ChatConversation.findOne({
-                    $or: [{ sellerRoll: cleanBuyer }, { buyerRoll: cleanBuyer }]
-                }).sort({ updatedAt: -1 });
+        // Also check by itemId and buyer name if roll was missing
+        if (!conversation && cleanBuyerName) {
+            conversation = await ChatConversation.findOne({
+                itemId: cleanItemId,
+                $or: [
+                    { buyerName: new RegExp(`^${cleanBuyerName}$`, "i") },
+                    { sellerName: new RegExp(`^${cleanBuyerName}$`, "i") }
+                ]
+            });
+        }
 
-                return res.json({ success: true, conversation: fallback || null });
-            }
+        // If still not found, check if ANY conversation exists for this itemId
+        if (!conversation) {
+            conversation = await ChatConversation.findOne({ itemId: cleanItemId }).sort({ updatedAt: -1 });
+        }
+
+        // Create new conversation if none exists
+        if (!conversation) {
+            const finalSellerRoll = cleanSeller || "seller";
+            const finalBuyerRoll = cleanBuyer || "buyer";
+
+            const allParticipants = Array.from(new Set([
+                finalSellerRoll,
+                finalBuyerRoll,
+                cleanSellerName,
+                cleanBuyerName
+            ].filter(Boolean)));
 
             conversation = await ChatConversation.create({
                 itemId: cleanItemId,
                 itemTitle: itemTitle || "Campus Gear",
-                sellerRoll: cleanSeller,
-                sellerName: sellerName || "Seller",
-                buyerRoll: cleanBuyer,
-                buyerName: buyerName || "Buyer",
-                participants: [cleanSeller, cleanBuyer],
+                sellerRoll: finalSellerRoll,
+                sellerName: cleanSellerName || "Listing Owner",
+                buyerRoll: finalBuyerRoll,
+                buyerName: cleanBuyerName || "Inquiring Student",
+                participants: allParticipants,
                 messages: []
             });
+        } else {
+            // Ensure both users and names are inside the participants array
+            let modified = false;
+            const participantsToAdd = [cleanBuyer, cleanSeller, cleanBuyerName, cleanSellerName].filter(Boolean);
+            participantsToAdd.forEach((p) => {
+                if (!conversation.participants.includes(p)) {
+                    conversation.participants.push(p);
+                    modified = true;
+                }
+            });
+            if (modified) {
+                await conversation.save();
+            }
         }
 
         res.json({ success: true, conversation });
@@ -90,9 +135,9 @@ router.post("/conversations/open", async (req, res) => {
 router.put("/conversations/:id/seen", async (req, res) => {
     try {
         const { id } = req.params;
-        const { readerRoll } = req.body;
+        const { readerRoll, readerName } = req.body;
 
-        if (!id || id === "undefined") {
+        if (!id || id === "undefined" || id === "null") {
             return res.status(400).json({ success: false, message: "Invalid conversation ID" });
         }
 
@@ -101,9 +146,17 @@ router.put("/conversations/:id/seen", async (req, res) => {
             return res.status(404).json({ success: false, message: "Thread not found" });
         }
 
+        const cleanRoll = String(readerRoll || "").trim();
+        const cleanName = String(readerName || "").trim().toLowerCase();
+
         let modified = false;
         conversation.messages.forEach((m) => {
-            if (String(m.senderRoll).trim() !== String(readerRoll).trim() && !m.seen) {
+            const msgRoll = String(m.senderRoll || "").trim();
+            const msgName = String(m.senderName || "").trim().toLowerCase();
+
+            const isSentByReader = (cleanRoll && msgRoll === cleanRoll) || (cleanName && msgName === cleanName);
+
+            if (!isSentByReader && !m.seen) {
                 m.seen = true;
                 modified = true;
             }
@@ -126,7 +179,7 @@ router.post("/conversations/:id/messages", async (req, res) => {
         const { id } = req.params;
         const { senderRoll, senderName, text } = req.body;
 
-        if (!id || id === "undefined") {
+        if (!id || id === "undefined" || id === "null") {
             return res.status(400).json({ success: false, message: "Invalid conversation ID" });
         }
 
@@ -142,9 +195,12 @@ router.post("/conversations/:id/messages", async (req, res) => {
             return res.status(404).json({ success: false, message: "Thread not found" });
         }
 
+        const cleanSenderRoll = String(senderRoll || "").trim();
+        const cleanSenderName = String(senderName || "Student").trim();
+
         const newMsg = {
-            senderRoll: String(senderRoll).trim(),
-            senderName: senderName || "Student",
+            senderRoll: cleanSenderRoll,
+            senderName: cleanSenderName,
             text: text.trim(),
             time: timeFormatted,
             seen: false
@@ -152,9 +208,12 @@ router.post("/conversations/:id/messages", async (req, res) => {
 
         conversation.messages.push(newMsg);
 
-        const cleanSender = String(senderRoll).trim();
-        if (!conversation.participants.includes(cleanSender)) {
-            conversation.participants.push(cleanSender);
+        // Ensure sender's roll and name are registered in participants
+        if (cleanSenderRoll && !conversation.participants.includes(cleanSenderRoll)) {
+            conversation.participants.push(cleanSenderRoll);
+        }
+        if (cleanSenderName && !conversation.participants.includes(cleanSenderName)) {
+            conversation.participants.push(cleanSenderName);
         }
 
         await conversation.save();

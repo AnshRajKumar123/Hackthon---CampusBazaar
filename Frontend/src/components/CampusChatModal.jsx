@@ -11,14 +11,26 @@ const CampusChatModal = ({ item, currentUser, onClose }) => {
     const [loading, setLoading] = useState(true);
     const messagesEndRef = useRef(null);
 
-    const myRoll = String(currentUser?.rollNo || "").trim();
+    // Read roll number across all potential user schema fields
+    const myRoll = String(
+        currentUser?.rollNo ||
+        currentUser?.identifier ||
+        currentUser?.studentRollNo ||
+        currentUser?.roll ||
+        currentUser?.studentRoll ||
+        ""
+    ).trim();
+
     const myName = String(currentUser?.name || "Me").trim();
 
-    // Helper: Determine the conversation partner's display info dynamically
+    // Helper: Determine conversation partner's display info dynamically
     const getPartnerInfo = (conversation) => {
         if (!conversation) return { name: "DBU Student", dept: "Verified Student" };
 
-        const isMeSeller = String(conversation.sellerRoll).trim() === myRoll;
+        const isMeSeller =
+            (conversation.sellerRoll && String(conversation.sellerRoll).trim() === myRoll) ||
+            (conversation.sellerName && conversation.sellerName.toLowerCase() === myName.toLowerCase());
+
         const otherName = isMeSeller ? conversation.buyerName : conversation.sellerName;
         const otherRole = isMeSeller ? "Student Buyer" : "Verified Seller";
         const otherRoll = isMeSeller ? conversation.buyerRoll : conversation.sellerRoll;
@@ -30,11 +42,12 @@ const CampusChatModal = ({ item, currentUser, onClose }) => {
         };
     };
 
-    // 1. Fetch all conversations for current user from MongoDB
+    // 1. Fetch all conversations from MongoDB using rollNo AND name
     const fetchThreads = async () => {
-        if (!myRoll) return [];
+        if (!myRoll && !myName) return [];
         try {
-            const res = await fetch(`${API_BASE}/conversations?rollNo=${myRoll}`);
+            const url = `${API_BASE}/conversations?rollNo=${encodeURIComponent(myRoll)}&name=${encodeURIComponent(myName)}`;
+            const res = await fetch(url);
             if (!res.ok) return [];
             const data = await res.json();
             if (data.success && Array.isArray(data.threads)) {
@@ -49,12 +62,12 @@ const CampusChatModal = ({ item, currentUser, onClose }) => {
 
     // 2. Mark unseen messages as read
     const markAsSeen = async (conversationId) => {
-        if (!conversationId || !myRoll) return;
+        if (!conversationId) return;
         try {
             await fetch(`${API_BASE}/conversations/${conversationId}/seen`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ readerRoll: myRoll })
+                body: JSON.stringify({ readerRoll: myRoll, readerName: myName })
             });
         } catch (err) {
             console.error("Failed to mark seen:", err);
@@ -72,23 +85,23 @@ const CampusChatModal = ({ item, currentUser, onClose }) => {
             if (item) {
                 const itemId = String(item.id || item._id || "").trim();
 
-                // Check all possible field variations for owner's roll number
                 const rawSellerRoll = String(
                     item.studentRollNo ||
                     item.rollNo ||
                     item.studentRoll ||
                     item.sellerRoll ||
-                    item.userRoll ||
+                    item.identifier ||
                     ""
                 ).trim();
 
-                const isItemOwner = rawSellerRoll && rawSellerRoll === myRoll;
+                const sellerName = item.studentName || item.sellerName || "Listing Owner";
+                const isItemOwner = (rawSellerRoll && rawSellerRoll === myRoll) || sellerName.toLowerCase() === myName.toLowerCase();
 
                 const payload = {
                     itemId,
                     itemTitle: item.itemTitle || item.title || "Campus Gear",
                     sellerRoll: rawSellerRoll || (isItemOwner ? myRoll : "seller"),
-                    sellerName: item.studentName || item.sellerName || (isItemOwner ? myName : "Listing Owner"),
+                    sellerName: sellerName,
                     buyerRoll: isItemOwner ? "" : myRoll,
                     buyerName: isItemOwner ? "" : myName
                 };
@@ -131,15 +144,16 @@ const CampusChatModal = ({ item, currentUser, onClose }) => {
         return () => {
             isMounted = false;
         };
-    }, [item, myRoll]);
+    }, [item, myRoll, myName]);
 
     // 4. Polling for live incoming messages from MongoDB (every 2 seconds)
     useEffect(() => {
-        if (!myRoll) return;
+        if (!myRoll && !myName) return;
 
         const interval = setInterval(async () => {
             try {
-                const res = await fetch(`${API_BASE}/conversations?rollNo=${myRoll}`);
+                const url = `${API_BASE}/conversations?rollNo=${encodeURIComponent(myRoll)}&name=${encodeURIComponent(myName)}`;
+                const res = await fetch(url);
                 if (res.ok) {
                     const data = await res.json();
                     if (data.success && Array.isArray(data.threads)) {
@@ -154,19 +168,19 @@ const CampusChatModal = ({ item, currentUser, onClose }) => {
                                 setMessages(updatedActive.messages || []);
                             }
                         } else if (data.threads.length > 0) {
-                            // If none was focused, select the latest one
+                            // Focus latest thread if none selected
                             setActiveConversation(data.threads[0]);
                             setMessages(data.threads[0].messages || []);
                         }
                     }
                 }
             } catch {
-                // Ignore transient network errors
+                // Ignore background polling errors
             }
         }, 2000);
 
         return () => clearInterval(interval);
-    }, [activeConversation?._id, myRoll]);
+    }, [activeConversation?._id, myRoll, myName]);
 
     // Switch conversation from sidebar
     const handleSelectThread = async (thread) => {
@@ -194,6 +208,7 @@ const CampusChatModal = ({ item, currentUser, onClose }) => {
                 item.rollNo ||
                 item.studentRoll ||
                 item.sellerRoll ||
+                item.identifier ||
                 ""
             ).trim();
 
@@ -332,7 +347,9 @@ const CampusChatModal = ({ item, currentUser, onClose }) => {
                             </div>
                         ) : (
                             messages.map((m) => {
-                                const isSentByMe = String(m.senderRoll).trim() === myRoll;
+                                const isSentByMe =
+                                    (m.senderRoll && String(m.senderRoll).trim() === myRoll) ||
+                                    (m.senderName && m.senderName.toLowerCase() === myName.toLowerCase());
 
                                 return (
                                     <div
