@@ -72,7 +72,7 @@ router.post("/conversations/open", async (req, res) => {
             });
         }
 
-        // Also check by itemId and buyer name if roll was missing
+        // Check by itemId and buyer name if roll is absent
         if (!conversation && cleanBuyerName) {
             conversation = await ChatConversation.findOne({
                 itemId: cleanItemId,
@@ -83,7 +83,7 @@ router.post("/conversations/open", async (req, res) => {
             });
         }
 
-        // If still not found, check if ANY conversation exists for this itemId
+        // Fallback: Check if ANY conversation exists for this itemId
         if (!conversation) {
             conversation = await ChatConversation.findOne({ itemId: cleanItemId }).sort({ updatedAt: -1 });
         }
@@ -111,7 +111,7 @@ router.post("/conversations/open", async (req, res) => {
                 messages: []
             });
         } else {
-            // Ensure both users and names are inside the participants array
+            // Ensure participants array stays synchronized
             let modified = false;
             const participantsToAdd = [cleanBuyer, cleanSeller, cleanBuyerName, cleanSellerName].filter(Boolean);
             participantsToAdd.forEach((p) => {
@@ -174,7 +174,7 @@ router.put("/conversations/:id/seen", async (req, res) => {
     }
 });
 
-// 4. Send a new message & Trigger recipient notification
+// 4. Send a new message & safely trigger notification for the other participant
 router.post("/conversations/:id/messages", async (req, res) => {
     try {
         const { id } = req.params;
@@ -209,7 +209,6 @@ router.post("/conversations/:id/messages", async (req, res) => {
 
         conversation.messages.push(newMsg);
 
-        // Ensure sender's roll and name are registered in participants
         if (cleanSenderRoll && !conversation.participants.includes(cleanSenderRoll)) {
             conversation.participants.push(cleanSenderRoll);
         }
@@ -219,21 +218,32 @@ router.post("/conversations/:id/messages", async (req, res) => {
 
         await conversation.save();
 
-        // Safe Notification Trigger inside the function scope
+        // Safe recipient calculation: ensures recipientRoll is never "undefined"
         try {
-            const isSenderSeller = String(conversation.sellerRoll).trim() === cleanSenderRoll;
-            const recipientRoll = isSenderSeller ? conversation.buyerRoll : conversation.sellerRoll;
+            let recipientRoll = "";
+            const isSenderSeller = conversation.sellerRoll && String(conversation.sellerRoll).trim() === cleanSenderRoll;
+
+            if (isSenderSeller && conversation.buyerRoll) {
+                recipientRoll = String(conversation.buyerRoll).trim();
+            } else if (!isSenderSeller && conversation.sellerRoll) {
+                recipientRoll = String(conversation.sellerRoll).trim();
+            } else if (Array.isArray(conversation.participants)) {
+                const alt = conversation.participants.find(
+                    (p) => p && p !== cleanSenderRoll && p !== "seller" && p !== "buyer" && p !== "undefined"
+                );
+                if (alt) recipientRoll = String(alt).trim();
+            }
 
             if (
                 recipientRoll &&
-                recipientRoll !== cleanSenderRoll &&
-                recipientRoll !== "seller" &&
-                recipientRoll !== "buyer"
+                recipientRoll !== "undefined" &&
+                recipientRoll !== "null" &&
+                recipientRoll !== cleanSenderRoll
             ) {
                 await Notification.create({
-                    recipientRoll: String(recipientRoll).trim(),
+                    recipientRoll: recipientRoll,
                     title: `New message from ${cleanSenderName}`,
-                    message: text.length > 50 ? `${text.slice(0, 50)}...` : text,
+                    message: text.length > 55 ? `${text.slice(0, 55)}...` : text,
                     type: "CHAT",
                     metadata: { itemId: conversation.itemId, itemTitle: conversation.itemTitle }
                 });

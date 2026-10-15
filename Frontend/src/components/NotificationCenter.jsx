@@ -9,7 +9,15 @@ export default function NotificationCenter({ currentUser }) {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
 
-    const myRoll = String(currentUser?.rollNo || currentUser?.identifier || "").trim();
+    // Support every possible roll alias in your auth context[cite: 46]
+    const myRoll = String(
+        currentUser?.rollNo ||
+        currentUser?.studentRollNo ||
+        currentUser?.identifier ||
+        currentUser?.roll ||
+        currentUser?.studentRoll ||
+        ""
+    ).trim();
 
     const fetchNotifications = async () => {
         if (!myRoll) return;
@@ -29,7 +37,7 @@ export default function NotificationCenter({ currentUser }) {
 
     useEffect(() => {
         fetchNotifications();
-        const interval = setInterval(fetchNotifications, 4000);
+        const interval = setInterval(fetchNotifications, 3000);
         return () => clearInterval(interval);
     }, [myRoll]);
 
@@ -82,6 +90,7 @@ export default function NotificationCenter({ currentUser }) {
                 className="NotificationBellBtn"
                 onClick={() => setIsOpen((prev) => !prev)}
                 title="Notifications"
+                aria-label="Notifications"
             >
                 <i className="bx bx-bell"></i>
                 {unreadCount > 0 && <span className="NotificationBadge">{unreadCount}</span>}

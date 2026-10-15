@@ -310,3 +310,56 @@
         border-radius: 50%;
     }
 }
+
+/* Notification Bell Styling inside Navbar */
+.NavControlsCluster {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.NotificationRoot {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.NotificationBellBtn {
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 19px;
+    position: relative;
+    transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.NotificationBellBtn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: scale(1.04);
+}
+
+.NotificationBadge {
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    background: #ef4444;
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 800;
+    min-width: 17px;
+    height: 17px;
+    padding: 0 4px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #002b54;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}

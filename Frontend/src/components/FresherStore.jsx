@@ -154,7 +154,6 @@ const FresherStore = ({ onOpenChat }) => {
         if (window.confirm(`Are you sure you want to delete "${title}"?`)) {
             try {
                 await deleteListing(itemId);
-                // Trigger notification in MongoDB
                 fetch("http://localhost:5001/api/notifications/create", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -335,7 +334,13 @@ const FresherStore = ({ onOpenChat }) => {
                                                 <button
                                                     type="button"
                                                     className="BtnCardLiveChat"
-                                                    onClick={() => onOpenChat && onOpenChat(item)}
+                                                    onClick={() => {
+                                                        if (typeof onOpenChat === "function") {
+                                                            onOpenChat(item);
+                                                        } else {
+                                                            console.warn("onOpenChat prop missing in FresherStore");
+                                                        }
+                                                    }}
                                                 >
                                                     <i className="bx bx-message-rounded-dots"></i>
                                                     <span>Live Chat</span>

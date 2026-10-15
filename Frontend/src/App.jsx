@@ -12,7 +12,7 @@ import ProfileModal from "./components/ProfileModal";
 import CampusChatModal from "./components/CampusChatModal";
 
 function App() {
-    const { currentUser, listings } = useCampus();
+    const { currentUser } = useCampus();
     const [selectedItemForModal, setSelectedItemForModal] = useState(null);
     const [showProfileModal, setShowProfileModal] = useState(false);
     const [activeChatItem, setActiveChatItem] = useState(null);
@@ -23,17 +23,25 @@ function App() {
         return <AuthModal isFullScreen={true} />;
     }
 
-    // Handles Live Chat click with self-ownership prevention
+    // Handles Live Chat click with safe item ownership detection
     const handleInitiateChat = (item) => {
+        if (!item) {
+            setActiveChatItem(null);
+            setIsChatOpen(true);
+            return;
+        }
+
+        const myRoll = String(currentUser?.rollNo || currentUser?.studentRollNo || "").trim();
+        const itemRoll = String(item.studentRollNo || item.rollNo || item.sellerRoll || "").trim();
         const isOwner =
-            currentUser.rollNo === item.userRollNo ||
+            (myRoll && itemRoll && myRoll === itemRoll) ||
             currentUser.id === item.userId ||
             currentUser._id === item.userId ||
-            currentUser.name === item.studentName;
+            (currentUser.name && currentUser.name.toLowerCase() === (item.studentName || "").toLowerCase());
 
         if (isOwner) {
-            alert("This is your listing! Buyers will message you here. Opening your inbox...");
-            setActiveChatItem(null); // Opens general sidebar inbox
+            alert("This is your listing! Opening your inbox to view inquiries from students...");
+            setActiveChatItem(null);
             setIsChatOpen(true);
             return;
         }
@@ -56,8 +64,8 @@ function App() {
                 <CampusHero onRentClick={(item) => setSelectedItemForModal(item)} />
                 <StudentListingForm />
                 <FresherStore
+                    onOpenChat={handleInitiateChat}
                     onRentClick={(item) => setSelectedItemForModal(item)}
-                    onChatClick={handleInitiateChat}
                 />
                 <CampusAboutAndSafety />
             </main>

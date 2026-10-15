@@ -4,11 +4,44 @@ import { useCampus } from "../context/CampusContext";
 import NotificationCenter from "./NotificationCenter";
 import "../styles/CampusNavbar.css";
 
+const API_BASE = "http://localhost:5001/api/notifications";
+
 const CampusNavbar = ({ onOpenAuth, onOpenProfile, onOpenChats }) => {
     const { currentUser } = useCampus();
     const [deferredPrompt, setDeferredPrompt] = useState(null);
     const [showInstallBtn, setShowInstallBtn] = useState(false);
     const [activeSection, setActiveSection] = useState("");
+    const [unreadCount, setUnreadCount] = useState(0);
+
+    const myRoll = String(
+        currentUser?.rollNo ||
+        currentUser?.studentRollNo ||
+        currentUser?.identifier ||
+        currentUser?.roll ||
+        ""
+    ).trim();
+
+    // Poll unread notifications count for the navlink pill badge
+    const fetchUnread = async () => {
+        if (!myRoll) return;
+        try {
+            const res = await fetch(`${API_BASE}?rollNo=${encodeURIComponent(myRoll)}`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.success) {
+                    setUnreadCount(data.unreadCount || 0);
+                }
+            }
+        } catch {
+            // Transient error ignored
+        }
+    };
+
+    useEffect(() => {
+        fetchUnread();
+        const interval = setInterval(fetchUnread, 3000);
+        return () => clearInterval(interval);
+    }, [myRoll]);
 
     useEffect(() => {
         const handleBeforeInstall = (e) => {
@@ -95,6 +128,25 @@ const CampusNavbar = ({ onOpenAuth, onOpenProfile, onOpenChats }) => {
                         <span>Live Chats</span>
                     </button>
 
+                    {/* Dedicated Notifications Navlink in the Center Dock */}
+                    {currentUser && (
+                        <button
+                            type="button"
+                            className={`DockLink ${activeSection === "notifications" ? "active" : ""}`}
+                            onClick={() => {
+                                setActiveSection("notifications");
+                                const bellBtn = document.querySelector(".NotificationBellBtn");
+                                if (bellBtn) bellBtn.click();
+                            }}
+                        >
+                            <i className="bx bx-bell"></i>
+                            <span>Notifications</span>
+                            {unreadCount > 0 && (
+                                <span className="NavlinkBadgePill">{unreadCount}</span>
+                            )}
+                        </button>
+                    )}
+
                     <button
                         type="button"
                         className={`DockLink ${activeSection === "about-section" ? "active" : ""}`}
@@ -114,7 +166,7 @@ const CampusNavbar = ({ onOpenAuth, onOpenProfile, onOpenChats }) => {
                     </button>
                 </nav>
 
-                {/* Right Member Controls & Notifications */}
+                {/* Right Member Controls & Notification Bell Dropdown */}
                 <div className="NavControlsCluster">
                     {showInstallBtn && (
                         <button type="button" className="InstallPillBtn" onClick={handleInstallClick}>
@@ -123,7 +175,7 @@ const CampusNavbar = ({ onOpenAuth, onOpenProfile, onOpenChats }) => {
                         </button>
                     )}
 
-                    {/* Notification Center Bell */}
+                    {/* Notification Bell Component */}
                     {currentUser && <NotificationCenter currentUser={currentUser} />}
 
                     {currentUser ? (
