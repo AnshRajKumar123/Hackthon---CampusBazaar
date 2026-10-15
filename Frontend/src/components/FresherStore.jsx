@@ -1,86 +1,63 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useCampus } from "../context/CampusContext";
+import RentDetailModal from "./RentDetailModal";
+import EditListingModal from "./EditListingModal";
 import "../styles/FresherStore.css";
 
-export const getImageUrl = (imagePath) => {
-    if (!imagePath) return "https://placehold.co/400x300?text=No+Photo";
-
-    if (
-        imagePath.startsWith("http://") ||
-        imagePath.startsWith("https://") ||
-        imagePath.startsWith("data:")
-    ) {
-        return imagePath;
+// Helper function to resolve photo URLs safely
+export const getImageUrl = (img) => {
+    if (!img) return "https://placehold.co/600x400?text=No+Photo";
+    if (img.startsWith("http://") || img.startsWith("https://") || img.startsWith("data:")) {
+        return img;
     }
-
-    const host =
-        window.location.hostname === "localhost" && window.location.protocol !== "capacitor:"
-            ? "localhost"
-            : "10.147.138.66";
-
-    return `http://${host}:5001${imagePath.startsWith("/") ? "" : "/"}${imagePath}`;
+    return `http://localhost:5001${img.startsWith("/") ? "" : "/"}${img}`;
 };
 
-const hostelFilters = [
-    "All Hostels",
-    "Block A",
-    "Block B",
-    "Block C",
-    "Block D",
-    "Block E",
-    "Block F / Khalsa Hostel",
-    "Sirhind Hostel",
-    "Girls Hostel",
-    "Girls Hostel / Khanna",
-    "Room Renter",
-    "Central Library North Gate",
-    "Engineering Workshop Block",
-];
-
-const categoryFilters = [
-    "All Categories",
-    "Drawing & Drafting",
-    "Electronics & Sensors",
-    "Lab Tools",
-    "Core Textbooks",
-    "Calculators & Instruments",
-];
-
-// Custom Dropdown Component
-const StoreCustomSelect = ({ icon, value, options, onChange }) => {
+// Reusable Custom Dropdown Component for Filters
+const CustomStoreDropdown = ({ label, icon, value, options, onChange }) => {
     const [isOpen, setIsOpen] = useState(false);
-    const selectRef = useRef(null);
+    const dropdownRef = useRef(null);
 
     useEffect(() => {
-        const handleOutsideClick = (e) => {
-            if (selectRef.current && !selectRef.current.contains(e.target)) {
+        const handleClickOutside = (e) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
                 setIsOpen(false);
             }
         };
-        document.addEventListener("mousedown", handleOutsideClick);
-        return () => document.removeEventListener("mousedown", handleOutsideClick);
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
     return (
-        <div className="StoreCustomSelectContainer" ref={selectRef}>
+        <div className="CustomDropdownWrapper" ref={dropdownRef}>
             <button
                 type="button"
-                className={`StoreCustomSelectTrigger ${isOpen ? "open" : ""}`}
+                className={`CustomDropdownTrigger ${isOpen ? "active" : ""}`}
                 onClick={() => setIsOpen((prev) => !prev)}
             >
-                <div className="TriggerContent">
-                    {icon && <i className={icon}></i>}
-                    <span className="SelectedLabel">{value}</span>
+                <div className="TriggerLabelBlock">
+                    <i className={icon}></i>
+                    <span>{value || label}</span>
                 </div>
-                <i className={`bx bx-chevron-down ChevronIcon ${isOpen ? "rotate" : ""}`}></i>
+                <i className={`bx bx-chevron-down DropdownChevron ${isOpen ? "rotate" : ""}`}></i>
             </button>
 
             {isOpen && (
-                <ul className="StoreCustomOptionsList">
+                <ul className="CustomDropdownList">
+                    <li
+                        className={`CustomDropdownItem ${!value ? "selected" : ""}`}
+                        onClick={() => {
+                            onChange("");
+                            setIsOpen(false);
+                        }}
+                    >
+                        <span>{label}</span>
+                        {!value && <i className="bx bx-check"></i>}
+                    </li>
                     {options.map((option) => (
                         <li
                             key={option}
-                            className={`StoreCustomOptionItem ${value === option ? "active" : ""}`}
+                            className={`CustomDropdownItem ${value === option ? "selected" : ""}`}
                             onClick={() => {
                                 onChange(option);
                                 setIsOpen(false);
@@ -96,76 +73,147 @@ const StoreCustomSelect = ({ icon, value, options, onChange }) => {
     );
 };
 
-const FresherStore = ({ onRentClick, onChatClick }) => {
-    const { listings, deleteListing, currentUser, isLoadingListings } = useCampus();
+const categoryFilterOptions = [
+    "Drawing & Drafting",
+    "Electronics & Sensors",
+    "Lab Tools",
+    "Core Textbooks",
+    "Calculators & Instruments",
+];
 
-    const [filterMode, setFilterMode] = useState("all");
-    const [selectedCategory, setSelectedCategory] = useState("All Categories");
-    const [selectedHostel, setSelectedHostel] = useState("All Hostels");
+const hostelFilterOptions = [
+    "Block A",
+    "Block B",
+    "Block C",
+    "Block D",
+    "Block E",
+    "Block F / Khalsa Hostel",
+    "Sirhind Hostel",
+    "Girls Hostel",
+    "Girls Hostel / Khanna",
+    "Room Renter",
+];
+
+const FresherStore = ({ onOpenChat }) => {
+    const { listings, fetchListings, deleteListing, currentUser } = useCampus();
+
+    const [activeTab, setActiveTab] = useState("all"); // "all" | "rent" | "buy"
     const [searchQuery, setSearchQuery] = useState("");
+    const [selectedCategory, setSelectedCategory] = useState("");
+    const [selectedHostel, setSelectedHostel] = useState("");
 
-    const filteredItems = listings.filter((item) => {
-        const matchesMode = filterMode === "all" || item.type === filterMode;
-        const matchesCategory =
-            selectedCategory === "All Categories" || item.category === selectedCategory;
-        const matchesHostel =
-            selectedHostel === "All Hostels" || item.hostelBlock === selectedHostel;
+    // Modal view states
+    const [selectedItemForDetails, setSelectedItemForDetails] = useState(null);
+    const [itemToEdit, setItemToEdit] = useState(null);
 
-        const q = searchQuery.toLowerCase().trim();
-        const matchesSearch =
-            !q ||
-            item.itemTitle?.toLowerCase().includes(q) ||
-            item.department?.toLowerCase().includes(q) ||
-            item.hostelBlock?.toLowerCase().includes(q) ||
-            item.category?.toLowerCase().includes(q) ||
-            item.studentName?.toLowerCase().includes(q);
+    const myRoll = String(
+        currentUser?.rollNo ||
+        currentUser?.identifier ||
+        currentUser?.studentRollNo ||
+        currentUser?.roll ||
+        ""
+    ).trim();
+    const myName = String(currentUser?.name || "").trim().toLowerCase();
 
-        return matchesMode && matchesCategory && matchesHostel && matchesSearch;
+    // Check if the current user owns this specific item
+    const checkIsSeller = (item) => {
+        const itemRoll = String(
+            item.studentRollNo ||
+            item.rollNo ||
+            item.studentRoll ||
+            item.sellerRoll ||
+            ""
+        ).trim();
+
+        const itemSellerName = String(item.studentName || item.sellerName || "").trim().toLowerCase();
+
+        return (myRoll && itemRoll && itemRoll === myRoll) || (myName && itemSellerName && itemSellerName === myName);
+    };
+
+    // Filter calculations
+    const filteredListings = listings.filter((item) => {
+        if (activeTab === "rent" && item.type !== "rent") return false;
+        if (activeTab === "buy" && item.type !== "buy") return false;
+
+        if (selectedCategory && item.category !== selectedCategory) return false;
+        if (selectedHostel && item.hostelBlock !== selectedHostel) return false;
+
+        if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase();
+            const titleMatch = item.itemTitle?.toLowerCase().includes(query);
+            const deptMatch = item.department?.toLowerCase().includes(query);
+            const hostelMatch = item.hostelBlock?.toLowerCase().includes(query);
+            const sellerMatch = item.studentName?.toLowerCase().includes(query);
+            if (!titleMatch && !deptMatch && !hostelMatch && !sellerMatch) return false;
+        }
+
+        return true;
     });
+
+    const handleDelete = async (itemId, title) => {
+        if (window.confirm(`Are you sure you want to delete "${title}"?`)) {
+            try {
+                await deleteListing(itemId);
+                // Trigger notification in MongoDB
+                fetch("http://localhost:5001/api/notifications/create", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        recipientRoll: myRoll,
+                        title: "Listing Removed",
+                        message: `Your item "${title}" has been deleted from CampusBazaar.`,
+                        type: "LISTING_DELETE"
+                    })
+                }).catch(() => {});
+            } catch (err) {
+                alert("Failed to delete item: " + err.message);
+            }
+        }
+    };
 
     return (
         <section id="fresher-store-section" className="FresherStoreSection">
             <div className="StoreContainer">
-                {/* Header Deck */}
+
+                {/* Section Header */}
                 <div className="StoreHeaderDeck">
                     <div>
-                        <span className="SectionCategoryPill">CAMPUS STORE</span>
-                        <h2 className="SectionHeading">
-                            Browse Real Student Items ({listings.length})
-                        </h2>
-                        <p className="SectionSubheading">
+                        <span className="StoreBadgePill">CAMPUS STORE</span>
+                        <h2 className="StoreMainTitle">Browse Real Student Items ({filteredListings.length})</h2>
+                        <p className="StoreSubtitle">
                             Real listings uploaded by students across Desh Bhagat University.
                         </p>
                     </div>
 
-                    <div className="StoreModeFilterPills">
+                    {/* Rent / Sale Tabs */}
+                    <div className="StoreSegmentedTabs">
                         <button
                             type="button"
-                            className={`ModePill ${filterMode === "all" ? "active" : ""}`}
-                            onClick={() => setFilterMode("all")}
+                            className={`StoreTabBtn ${activeTab === "all" ? "active" : ""}`}
+                            onClick={() => setActiveTab("all")}
                         >
                             All ({listings.length})
                         </button>
                         <button
                             type="button"
-                            className={`ModePill ${filterMode === "rent" ? "active" : ""}`}
-                            onClick={() => setFilterMode("rent")}
+                            className={`StoreTabBtn ${activeTab === "rent" ? "active" : ""}`}
+                            onClick={() => setActiveTab("rent")}
                         >
                             Rentals
                         </button>
                         <button
                             type="button"
-                            className={`ModePill ${filterMode === "buy" ? "active" : ""}`}
-                            onClick={() => setFilterMode("buy")}
+                            className={`StoreTabBtn ${activeTab === "buy" ? "active" : ""}`}
+                            onClick={() => setActiveTab("buy")}
                         >
                             For Sale
                         </button>
                     </div>
                 </div>
 
-                {/* Multi-Filter & Search Bar */}
-                <div className="StoreControlsBar">
-                    <div className="StoreSearchBar">
+                {/* Search & Custom Dropdown Filter Controls */}
+                <div className="StoreFilterBarDeck">
+                    <div className="StoreSearchBox">
                         <i className="bx bx-search"></i>
                         <input
                             type="text"
@@ -173,171 +221,162 @@ const FresherStore = ({ onRentClick, onChatClick }) => {
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
-                        {searchQuery && (
-                            <button
-                                type="button"
-                                className="ClearSearchBtn"
-                                onClick={() => setSearchQuery("")}
-                            >
-                                <i className="bx bx-x"></i>
-                            </button>
-                        )}
                     </div>
 
-                    <div className="StoreDropdownFilters">
-                        <StoreCustomSelect
-                            icon="bx bx-purchase-tag-alt"
+                    <div className="FilterDropdownRow">
+                        <CustomStoreDropdown
+                            label="All Categories"
+                            icon="bx bx-tag"
                             value={selectedCategory}
-                            options={categoryFilters}
-                            onChange={setSelectedCategory}
+                            options={categoryFilterOptions}
+                            onChange={(val) => setSelectedCategory(val)}
                         />
 
-                        <StoreCustomSelect
+                        <CustomStoreDropdown
+                            label="All Hostels"
                             icon="bx bx-building"
                             value={selectedHostel}
-                            options={hostelFilters}
-                            onChange={setSelectedHostel}
+                            options={hostelFilterOptions}
+                            onChange={(val) => setSelectedHostel(val)}
                         />
                     </div>
                 </div>
 
-                {/* Dynamic State Rendering */}
-                {isLoadingListings ? (
-                    <div className="StoreLoadingState">
-                        <i className="bx bx-loader-alt bx-spin"></i>
-                        <p>Syncing campus gear from MongoDB Atlas...</p>
-                    </div>
-                ) : filteredItems.length === 0 ? (
-                    <div className="EmptyCatalogState">
-                        <i className="bx bx-box"></i>
-                        <h3>No Items Match Your Filter</h3>
-                        <p>Try clearing filters or search keywords to view other student gear.</p>
-                        {(searchQuery ||
-                            selectedCategory !== "All Categories" ||
-                            selectedHostel !== "All Hostels" ||
-                            filterMode !== "all") && (
-                                <button
-                                    type="button"
-                                    className="ResetFiltersBtn"
-                                    onClick={() => {
-                                        setFilterMode("all");
-                                        setSelectedCategory("All Categories");
-                                        setSelectedHostel("All Hostels");
-                                        setSearchQuery("");
-                                    }}
-                                >
-                                    Reset All Filters
-                                </button>
-                            )}
+                {/* Listing Grid */}
+                {filteredListings.length === 0 ? (
+                    <div className="StoreEmptyState">
+                        <i className="bx bx-package"></i>
+                        <h3>No items found</h3>
+                        <p>Try adjusting your search query, department, or hostel filters.</p>
                     </div>
                 ) : (
-                    <div className="CatalogGrid">
-                        {filteredItems.map((item) => {
-                            const isOwner =
-                                currentUser &&
-                                (currentUser.rollNo === item.userRollNo ||
-                                    currentUser.id === item.userId ||
-                                    currentUser._id === item.userId);
+                    <div className="StoreProductGrid">
+                        {filteredListings.map((item) => {
+                            const isSeller = checkIsSeller(item);
+                            const primaryImage = item.images && item.images.length > 0
+                                ? item.images[0]
+                                : "https://placehold.co/600x400?text=No+Photo";
 
                             return (
-                                <div key={item.id || item._id} className="ProductCard">
-                                    <div className="CardImageHolder">
+                                <article key={item._id || item.id} className="StudentItemCard">
+                                    <div className="ItemCardMedia">
                                         <img
-                                            src={getImageUrl(item.images?.[0])}
+                                            src={getImageUrl(primaryImage)}
                                             alt={item.itemTitle}
                                             loading="lazy"
                                             onError={(e) => {
-                                                e.target.src = "https://placehold.co/400x300?text=No+Photo";
+                                                e.target.src = "https://placehold.co/600x400?text=No+Photo";
                                             }}
                                         />
-                                        <span className={`TypeFlag ${item.type}`}>
-                                            {item.type === "rent" ? "For Rent" : "For Sale"}
+                                        <span className={`ItemTypeTag ${item.type === "rent" ? "rent" : "buy"}`}>
+                                            {item.type === "rent" ? "FOR RENT" : "FOR SALE"}
                                         </span>
 
-                                        {isOwner && (
+                                        {/* Seller Delete Action */}
+                                        {isSeller && (
                                             <button
                                                 type="button"
-                                                className="DeleteListingBtn"
-                                                title="Delete your item"
-                                                onClick={() => {
-                                                    if (window.confirm(`Delete "${item.itemTitle}"?`)) {
-                                                        deleteListing(item.id || item._id);
-                                                    }
-                                                }}
+                                                className="ItemDeleteFloatingBtn"
+                                                title="Delete Listing"
+                                                onClick={() => handleDelete(item._id || item.id, item.itemTitle)}
                                             >
                                                 <i className="bx bx-trash"></i>
                                             </button>
                                         )}
                                     </div>
 
-                                    <div className="CardBody">
-                                        <div className="CardCategoryTag">{item.category}</div>
-                                        <h3 className="CardTitle" title={item.itemTitle}>
-                                            {item.itemTitle}
-                                        </h3>
+                                    <div className="ItemCardBody">
+                                        <span className="CardCategoryText">{item.category}</span>
+                                        <h4 className="CardItemTitle">{item.itemTitle}</h4>
 
-                                        <div className="OwnerMetaRow">
-                                            <i className="bx bx-user"></i>
+                                        <div className="CardOwnerInfo">
                                             <span>
-                                                {item.studentName} ({item.department})
+                                                <i className="bx bx-user"></i> {item.studentName} ({item.department})
+                                            </span>
+                                            <span>
+                                                <i className="bx bx-building"></i> {item.hostelBlock}
                                             </span>
                                         </div>
 
-                                        <div className="HostelMetaRow">
-                                            <i className="bx bx-map-pin"></i>
-                                            <span>{item.hostelBlock}</span>
-                                        </div>
-
-                                        <div className="CardPricingStrip">
+                                        {/* Pricing Block */}
+                                        <div className="CardPricingBox">
                                             {item.type === "rent" ? (
-                                                <div>
-                                                    <strong className="PrimaryPrice">₹{item.rentPerWeek}</strong>
-                                                    <span className="PerUnitText">
-                                                        / week (₹{item.rentPerDay}/day)
-                                                    </span>
+                                                <>
+                                                    <div className="CardPriceRow">
+                                                        <strong>₹{item.rentPerWeek}</strong>
+                                                        <span>/ week (₹{item.rentPerDay}/day)</span>
+                                                    </div>
                                                     {item.refundableDeposit > 0 && (
-                                                        <small className="DepositHint">
+                                                        <small className="CardDepositText">
                                                             ₹{item.refundableDeposit} security deposit
                                                         </small>
                                                     )}
-                                                </div>
+                                                </>
                                             ) : (
-                                                <div>
-                                                    <strong className="PrimaryPrice">₹{item.buyPrice}</strong>
-                                                    <span className="PerUnitText">One-time Buy</span>
-                                                    {item.originalMrp && (
-                                                        <small className="MrpCut">MRP ₹{item.originalMrp}</small>
-                                                    )}
+                                                <div className="CardPriceRow">
+                                                    <strong>₹{item.buyPrice}</strong>
+                                                    <span>(Permanent Buy)</span>
                                                 </div>
                                             )}
                                         </div>
 
-                                        {/* Action Buttons: Live Chat + Details */}
-                                        <div className="CardActionsRow">
-                                            <button
-                                                type="button"
-                                                className="WhatsAppActionBtn"
-                                                onClick={() => onChatClick && onChatClick(item)}
-                                            >
-                                                <i className="bx bx-message-rounded-dots"></i>
-                                                <span>Live Chat</span>
-                                            </button>
+                                        {/* Card Actions: Seller vs Buyer */}
+                                        <div className="CardActionCluster">
+                                            {isSeller ? (
+                                                <button
+                                                    type="button"
+                                                    className="BtnCardUpdateDetails"
+                                                    onClick={() => setItemToEdit(item)}
+                                                >
+                                                    <i className="bx bx-edit-alt"></i>
+                                                    <span>Update Details</span>
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    className="BtnCardLiveChat"
+                                                    onClick={() => onOpenChat && onOpenChat(item)}
+                                                >
+                                                    <i className="bx bx-message-rounded-dots"></i>
+                                                    <span>Live Chat</span>
+                                                </button>
+                                            )}
 
                                             <button
                                                 type="button"
-                                                className="BorrowDetailBtn"
-                                                onClick={() => onRentClick && onRentClick(item)}
+                                                className="BtnCardDetails"
+                                                onClick={() => setSelectedItemForDetails(item)}
                                             >
-                                                Details
+                                                <span>Details</span>
                                             </button>
                                         </div>
                                     </div>
-                                </div>
+                                </article>
                             );
                         })}
                     </div>
                 )}
             </div>
+
+            {/* Details Modal */}
+            {selectedItemForDetails && (
+                <RentDetailModal
+                    item={selectedItemForDetails}
+                    onClose={() => setSelectedItemForDetails(null)}
+                    onOpenChat={onOpenChat}
+                />
+            )}
+
+            {/* Seller Edit Listing Modal */}
+            {itemToEdit && (
+                <EditListingModal
+                    item={itemToEdit}
+                    onClose={() => setItemToEdit(null)}
+                    onUpdateSuccess={() => {
+                        if (fetchListings) fetchListings();
+                    }}
+                />
+            )}
         </section>
     );
 };

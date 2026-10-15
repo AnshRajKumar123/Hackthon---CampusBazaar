@@ -1,5 +1,6 @@
 const express = require("express");
 const { ChatConversation } = require("../models/Chat");
+const { Notification } = require("../models/Notification");
 
 const router = express.Router();
 
@@ -173,7 +174,7 @@ router.put("/conversations/:id/seen", async (req, res) => {
     }
 });
 
-// 4. Send a new message
+// 4. Send a new message & Trigger recipient notification
 router.post("/conversations/:id/messages", async (req, res) => {
     try {
         const { id } = req.params;
@@ -217,6 +218,29 @@ router.post("/conversations/:id/messages", async (req, res) => {
         }
 
         await conversation.save();
+
+        // Safe Notification Trigger inside the function scope
+        try {
+            const isSenderSeller = String(conversation.sellerRoll).trim() === cleanSenderRoll;
+            const recipientRoll = isSenderSeller ? conversation.buyerRoll : conversation.sellerRoll;
+
+            if (
+                recipientRoll &&
+                recipientRoll !== cleanSenderRoll &&
+                recipientRoll !== "seller" &&
+                recipientRoll !== "buyer"
+            ) {
+                await Notification.create({
+                    recipientRoll: String(recipientRoll).trim(),
+                    title: `New message from ${cleanSenderName}`,
+                    message: text.length > 50 ? `${text.slice(0, 50)}...` : text,
+                    type: "CHAT",
+                    metadata: { itemId: conversation.itemId, itemTitle: conversation.itemTitle }
+                });
+            }
+        } catch (notifErr) {
+            console.error("Notification creation failed:", notifErr);
+        }
 
         res.json({ success: true, message: newMsg, conversation });
     } catch (err) {

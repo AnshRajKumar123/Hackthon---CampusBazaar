@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import WebLogo from "../assets/CampusImage/WebLogo.png";
 import { useCampus } from "../context/CampusContext";
+import NotificationCenter from "./NotificationCenter";
 import "../styles/CampusNavbar.css";
 
 const CampusNavbar = ({ onOpenAuth, onOpenProfile, onOpenChats }) => {
@@ -82,7 +83,6 @@ const CampusNavbar = ({ onOpenAuth, onOpenProfile, onOpenChats }) => {
                         <span>Campus Store</span>
                     </button>
 
-                    {/* NEW: In-App Live Chats Navlink */}
                     <button
                         type="button"
                         className={`DockLink ${activeSection === "chats" ? "active" : ""}`}
@@ -114,7 +114,7 @@ const CampusNavbar = ({ onOpenAuth, onOpenProfile, onOpenChats }) => {
                     </button>
                 </nav>
 
-                {/* Right CTA / Member Controls */}
+                {/* Right Member Controls & Notifications */}
                 <div className="NavControlsCluster">
                     {showInstallBtn && (
                         <button type="button" className="InstallPillBtn" onClick={handleInstallClick}>
@@ -123,13 +123,18 @@ const CampusNavbar = ({ onOpenAuth, onOpenProfile, onOpenChats }) => {
                         </button>
                     )}
 
+                    {/* Notification Center Bell */}
+                    {currentUser && <NotificationCenter currentUser={currentUser} />}
+
                     {currentUser ? (
                         <button type="button" className="ModernMemberBadge" onClick={onOpenProfile}>
                             <div className="MemberAvatar">
-                                {currentUser.name.charAt(0).toUpperCase()}
+                                {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : "U"}
                             </div>
                             <div className="MemberMeta">
-                                <span className="MemberName">{currentUser.name.split(" ")[0]}</span>
+                                <span className="MemberName">
+                                    {currentUser.name ? currentUser.name.split(" ")[0] : "Student"}
+                                </span>
                                 <span className="MemberRoll">{currentUser.rollNo}</span>
                             </div>
                             <i className="bx bx-chevron-right NavMemberArrow"></i>

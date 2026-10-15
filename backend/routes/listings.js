@@ -44,4 +44,17 @@ router.delete("/:id", async (req, res) => {
     }
 });
 
+// Update listing details
+router.put("/:id", async (req, res) => {
+    try {
+        const updated = await Listing.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!updated) {
+            return res.status(404).json({ success: false, message: "Listing not found" });
+        }
+        res.json({ success: true, listing: updated });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
 module.exports = router;
