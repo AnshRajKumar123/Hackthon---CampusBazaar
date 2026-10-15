@@ -271,6 +271,7 @@
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
+/* Message Bubble Layout */
 .ChatMessageBubble {
     max-width: 75%;
     padding: 8px 12px;
@@ -284,6 +285,7 @@
     flex-direction: column;
 }
 
+/* Sent Messages (Right side, Green) */
 .ChatMessageBubble.sent {
     align-self: flex-end;
     background: #d9fdd3;
@@ -291,6 +293,7 @@
     color: #111b21;
 }
 
+/* Received Messages (Left side, White) */
 .ChatMessageBubble.received {
     align-self: flex-start;
     background: #ffffff;
@@ -308,7 +311,14 @@
     color: #667781;
 }
 
-.MessageFooter .bx-check-double {
+/* Delivered tick: Grey */
+.MessageFooter .bx-check-double.delivered {
+    color: #8696a0;
+    font-size: 14px;
+}
+
+/* Seen tick: Blue only when seen is true */
+.MessageFooter .bx-check-double.seen {
     color: #53bdeb;
     font-size: 14px;
 }

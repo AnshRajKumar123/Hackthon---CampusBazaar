@@ -35,6 +35,7 @@ app.get("/api/health", (req, res) => {
 // Route Handlers
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/listings", require("./routes/listings"));
+app.use("/api/chat", require("./routes/chatRoutes"));
 
 // MongoDB Atlas Connection
 mongoose
